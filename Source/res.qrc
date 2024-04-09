@@ -1,0 +1,49 @@
+<RCC>
+    <qresource prefix="/Gifs">
+        <file>Images/Gifs/IhaveNoEnemies.gif</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>Images/Background/GreenSpace.png</file>
+        <file>Images/Background/Nebula.jpg</file>
+    </qresource>
+    <qresource prefix="/styles">
+        <file>menuStyle.qss</file>
+        <file>style.qss</file>
+    </qresource>
+    <qresource prefix="/Music">
+        <file>Music/Nujabes-Aruarian Dance.m4a</file>
+    </qresource>
+    <qresource prefix="/Icons">
+        <file>Images/Icons/AcceptIcon.png</file>
+        <file>Images/Icons/AddFriendIcon.png</file>
+        <file>Images/Icons/BlockedIcon.png</file>
+        <file>Images/Icons/BlockIcon.png</file>
+        <file>Images/Icons/CallIcon.png</file>
+        <file>Images/Icons/ChatListIcon.png</file>
+        <file>Images/Icons/Checked.png</file>
+        <file>Images/Icons/ClosedEye.png</file>
+        <file>Images/Icons/defaultPfp.png</file>
+        <file>Images/Icons/defaultPfpIcon.jpg</file>
+        <file>Images/Icons/DotIcon.png</file>
+        <file>Images/Icons/EditLineIcon.png</file>
+        <file>Images/Icons/ExclamationMark.png</file>
+        <file>Images/Icons/FriendListIcon2.jpg</file>
+        <file>Images/Icons/FriendsIcon.png</file>
+        <file>Images/Icons/LeftArrow.png</file>
+        <file>Images/Icons/LogOutIcon.png</file>
+        <file>Images/Icons/MessageIcon.png</file>
+        <file>Images/Icons/MoreOptionsIcon.png</file>
+        <file>Images/Icons/mute_icon_music.png</file>
+        <file>Images/Icons/OpenEye.png</file>
+        <file>Images/Icons/OpenEye.svg</file>
+        <file>Images/Icons/PauseIcon.svg</file>
+        <file>Images/Icons/PlayIcon.png</file>
+        <file>Images/Icons/RejectIcon.png</file>
+        <file>Images/Icons/RemoveIcon.png</file>
+        <file>Images/Icons/RemoveUserIcon.png</file>
+        <file>Images/Icons/RequestsIcon.png</file>
+        <file>Images/Icons/SearchIcon.png</file>
+        <file>Images/Icons/unmute_icon_music.png</file>
+    </qresource>
+    <qresource prefix="/Special"/>
+</RCC>
