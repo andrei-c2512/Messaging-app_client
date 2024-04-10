@@ -6,7 +6,7 @@
 #include <QDateTime>
 #include <QTimeZone>
 #include <algorithm>
-#include "StyleBase/Tools.h"
+#include "Tools.h"
 
 class MessageInfo : public QObject{
     Q_OBJECT

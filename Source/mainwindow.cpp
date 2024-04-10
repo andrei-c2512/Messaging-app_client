@@ -35,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
     styleFile.close();
     setStyleSheet(styleSheet);
 
-    pEffect = new BackgroundShiftOnMouseEffect(this, QPixmap(":/images/GreenSpace.png"), 3);
+    pEffect = new BackgroundShiftOnMouseEffect(this, QPixmap(":/Images/Images/Background/GreenSpace.png"), 3);
     pEffect->setGeometry(QRect(QPoint(0 , 0) , screenSize));
     pServerInfoProcessor = new ServerInfoProcessor(this);
     

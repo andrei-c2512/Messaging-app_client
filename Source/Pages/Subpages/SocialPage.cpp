@@ -32,6 +32,7 @@ void ContactList::setContactList(std::vector<ContactInfo*> contactList , ServerI
                     }
                 }
             });
+
             pLayout->insertWidget(pLayout->count() - 1 , *b);
         }
 
@@ -114,25 +115,25 @@ void ContactList::updateLabel( bool isSearchBarEmpty)
     case SearchType::AddFriend:
         aux = (isSearchBarEmpty) ? "Search for people" : "No results";
         pSpecialLabel->setVisible(false);
-        pSpecialLabel->player().stop();
+        pSpecialLabel->fadeMusic();
         break;
     case SearchType::RequestList:
         aux = (isSearchBarEmpty) ? "You have no requests" : "No results";
         pSpecialLabel->setVisible(false);
-        pSpecialLabel->player().stop();
+        pSpecialLabel->fadeMusic();
         break;
     case SearchType::FriendList:
         aux = (isSearchBarEmpty) ? "You have no friends" : "No results";
         pSpecialLabel->setVisible(false);
         pSpecialLabel->movie().stop();
-        pSpecialLabel->player().stop();
+        pSpecialLabel->fadeMusic();
         break;
     case SearchType::BlockedList:
         aux = (isSearchBarEmpty) ? "" : "No results";
 
         if(pEmptyListLabel->isVisible())
         {
-            pSpecialLabel->player().play();
+            pSpecialLabel->startMusic();
             pSpecialLabel->movie().start();
             pSpecialLabel->setVisible( true);
         }
@@ -166,7 +167,9 @@ SocialPage::SocialPage(QWidget* parent ,ServerInfoProcessor& pInfoProcessor0 , C
         pList->setContactList(serverInfoProcessor.requestList() , serverInfoProcessor , chatPage , stackedWidget, SearchType::RequestList , pSearchBar->document()->isEmpty());
     });
     connect(&serverInfoProcessor, &ServerInfoProcessor::contactInfoLoaded, this, [=]() {
-        pList->setContactList(serverInfoProcessor.blockedList(), serverInfoProcessor, chatPage, stackedWidget, SearchType::BlockedList, pSearchBar->document()->isEmpty());
+
+        if(serverInfoProcessor.blockedList().size()) //this will make it so that the meme widget doesn't play when logging in
+            pList->setContactList(serverInfoProcessor.blockedList(), serverInfoProcessor, chatPage, stackedWidget, SearchType::BlockedList, pSearchBar->document()->isEmpty());
         pList->setContactList(serverInfoProcessor.requestList(), serverInfoProcessor, chatPage, stackedWidget, SearchType::RequestList, pSearchBar->document()->isEmpty());
         pList->setContactList(serverInfoProcessor.friendList(), serverInfoProcessor, chatPage, stackedWidget, SearchType::FriendList, pSearchBar->document()->isEmpty());
     });
@@ -245,7 +248,7 @@ void SocialPage::setupUi()
     pBlockedBtn->setText("Blocked");
     pBlockedBtn->setFont(StyleRepository::Base::mediumSizeButtonFont());
     pBlockedBtn->setIconSize(QSize(32 , 32));
-    pBlockedBtn->setIcon(QPixmap(":/Icons/BlockedIcon.png"));
+    pBlockedBtn->setIcon(QPixmap(":/Images/Images/Icons/BlockedIcon.png"));
 
     pOptionMenu = new OptionMenu;
 

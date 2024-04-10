@@ -115,7 +115,7 @@ public:
     };
 public:
     BlockUI(QWidget* parent = nullptr);
-    void setMode(Mode mode , ContactInfo* info);
+    void setMode(Mode mode , ContactInfo* info , ServerInfoProcessor& processor);
 private:
     void setupUi();
 private:

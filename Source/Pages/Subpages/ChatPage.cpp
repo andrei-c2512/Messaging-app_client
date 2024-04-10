@@ -290,8 +290,9 @@ BlockUI::BlockUI(QWidget* parent) : QWidget(parent)
 {
     setupUi();
 }
-void BlockUI::setMode(Mode mode , ContactInfo* info)
+void BlockUI::setMode(Mode mode , ContactInfo* info , ServerInfoProcessor& processor)
 {
+    pUnblockButton->disconnect();
     if (mode == Mode::YouAreBlocked)
     {
         pLabel->setText(info->name() + " has blocked YOU");
@@ -301,6 +302,9 @@ void BlockUI::setMode(Mode mode , ContactInfo* info)
     {
         pLabel->setText("You have blocked " + info->name());
         pUnblockButton->setVisible(true);
+        connect(pUnblockButton, &CustomButton::clicked, this, [&processor, info]() {
+            processor.unblockUser(info->id());
+        });
     }
 }
 void BlockUI::setupUi()
@@ -375,7 +379,7 @@ void ChatPage::onGettingBlocked(bool blocked)
 {
     if (blocked)
     {
-        pBlockUI->setMode(BlockUI::Mode::YouAreBlocked, lastPrivateChatUser);
+        pBlockUI->setMode(BlockUI::Mode::YouAreBlocked, lastPrivateChatUser, serverInfoProcessor);
         pStackedWidget->setCurrentWidget(pBlockUI);
     }
     else
@@ -385,7 +389,7 @@ void ChatPage::onBlocking(bool blocked)
 {
     if (blocked)
     {
-        pBlockUI->setMode(BlockUI::Mode::YouBlocked, lastPrivateChatUser);
+        pBlockUI->setMode(BlockUI::Mode::YouBlocked, lastPrivateChatUser, serverInfoProcessor);
         pStackedWidget->setCurrentWidget(pBlockUI);
     }
     else
@@ -420,7 +424,7 @@ void ChatPage::setChat(int id)
 
         if (mode != BlockUI::Mode::Invalid)
         {
-            pBlockUI->setMode(mode, contactInfo);
+            pBlockUI->setMode(mode, contactInfo, serverInfoProcessor);
             pStackedWidget->setCurrentWidget(pBlockUI);
         }
         else

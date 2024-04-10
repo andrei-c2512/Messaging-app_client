@@ -18,10 +18,10 @@ static std::unique_ptr<QPixmap> _pfpPixmap;
 
 void StyleRepository::initializeVariables()
 {
-    _removePixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Icons/RemoveIcon.png"), QColor(215, 38, 61))));
-    _callPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Icons/CallIcon.png"), "white")));
-    _blockPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Icons/BlockIcon.png"), QColor(215, 38, 61))));
-    _pfpPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/images/defaultPfpIcon.jpg").scaled(pfpImageSize), "white")));
+    _removePixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/RemoveIcon.png"), QColor(215, 38, 61))));
+    _callPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/CallIcon.png"), "white")));
+    _blockPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/BlockIcon.png"), QColor(215, 38, 61))));
+    _pfpPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/defaultPfpIcon.jpg").scaled(pfpImageSize), "white")));
 }
 
 /*Base colors beggin */
@@ -100,20 +100,20 @@ QColor StyleRepository::EditButton::ConfirmState::iconColor(){  return QColor(22
 QColor StyleRepository::EditButton::ConfirmState::borderColor(){  return QColor(22, 193, 114);   }
 QColor StyleRepository::EditButton::ConfirmState::hoverIconColor() { return QColor(35, 231, 139); }
 QColor StyleRepository::EditButton::ConfirmState::hoverBorderColor() { return QColor(35, 231, 139); }
-QString StyleRepository::EditButton::ConfirmState::icon() { return QString(":/images/Checked.png");}
+QString StyleRepository::EditButton::ConfirmState::icon() { return QString(":/Images/Images/Icons/Checked.png");}
 
 QColor StyleRepository::EditButton::StartEditState::iconColor() { return QColor(255, 162, 31);}
 QColor StyleRepository::EditButton::StartEditState::borderColor() { return QColor(255, 162, 31);}
 QColor StyleRepository::EditButton::StartEditState::hoverIconColor() { return QColor(255, 179, 71);}
 QColor StyleRepository::EditButton::StartEditState::hoverBorderColor() { return QColor(255, 179, 71);}
-QString StyleRepository::EditButton::StartEditState::icon() { return QString(":/images/EditLineIcon.png");}
+QString StyleRepository::EditButton::StartEditState::icon() { return QString(":/Images/Images/Icons/EditLineIcon.png");}
 /*Edit Button end */
 
 /*Mute button(for music) beggin */
-QString StyleRepository::MuteButton_Sound::muteIcon(){return QString("mute_icon_music.png");}
+QString StyleRepository::MuteButton_Sound::muteIcon(){return QString(":/Images/Images/Icons/mute_icon_music.png");}
 QColor StyleRepository::MuteButton_Sound::unselectedIconColor() { return QColor();}
 
-QString StyleRepository::MuteButton_Sound::unmuteIcon() { return QString(":/images/unmute_icon_music.png");}
+QString StyleRepository::MuteButton_Sound::unmuteIcon() { return QString(":/Images/Images/Icons/unmute_icon_music.png");}
 QColor StyleRepository::MuteButton_Sound::selectedColor(){ return QColor();}
 
 int StyleRepository::MuteButton_Sound::iconSizeIncreasePercentage() { return 20;}

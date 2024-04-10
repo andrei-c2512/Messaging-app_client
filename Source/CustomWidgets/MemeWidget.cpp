@@ -9,17 +9,19 @@ MemeWidget::MemeWidget(QWidget* parent) : QWidget(parent)
 
 void MemeWidget::setupUi()
 {
-    pMovie = new QMovie(":/Special/IhaveNoEnemies.gif");
+    _paused = false;
+    pMovie = new QMovie(":/Images/Images/Gifs/IhaveNoEnemies.gif");
     pMovieLabel = new QLabel(this);
     pMovieLabel->setMovie(pMovie);
     pMovie->start();
 
     pOutput = new QAudioOutput;
-    pOutput->setVolume(1.0f);
+    pOutput->setVolume(0.0f);
 
     pPlayer = new QMediaPlayer(this);
     pPlayer->setAudioOutput(pOutput);
-    pPlayer->setSource(QUrl::fromLocalFile("C:/Users/Const/Documents/DiscordApp/Code/Nujabes - Aruarian Dance.mp4"));
+    pPlayer->setSource(QUrl::fromLocalFile("C:/Users/Const/Documents/Stana/Source/Music/Nujabes-Aruarian Dance.m4a"));
+    pPlayer->stop();
 
     _effectList = { new QGraphicsOpacityEffect(this) , new QGraphicsOpacityEffect(this) , new QGraphicsOpacityEffect(this)};
     pSoundButton = new SelectableButton(nullptr , ButtonStyleRepository::muteButton());
@@ -83,25 +85,59 @@ void MemeWidget::setupUi()
     pPlacementLayout->addLayout(pWidgetLayout , 1 );
 
 
-    pAnimation = new QPropertyAnimation(this , "opacity" , this);
-    pAnimation->setStartValue(0.0f);
-    pAnimation->setEndValue(1.0f);
-    pAnimation->setDuration(200);
+    pOppacityAnimation = new QPropertyAnimation(this , "opacity" , this);
+    pOppacityAnimation->setStartValue(0.0f);
+    pOppacityAnimation->setEndValue(1.0f);
+    pOppacityAnimation->setDuration(200);
 
+
+    const int soundAnimDur = 4000; // 5 seconds
+    pSoundFadeAnimation = new QPropertyAnimation(this , "volume" , this);
+    pSoundFadeAnimation->setEasingCurve(QEasingCurve::Linear);
+    pSoundFadeAnimation->setDuration(soundAnimDur);
+
+    connect(pSoundFadeAnimation, &QPropertyAnimation::finished, this, [=]() {
+        pPlayer->stop();
+        });
+    pSoundApproachAnimation = new QPropertyAnimation(this, "volume", this);
+    pSoundApproachAnimation->setEasingCurve(QEasingCurve::Linear);
+    pSoundApproachAnimation->setDuration(soundAnimDur);
+}   
+
+
+void MemeWidget::fadeMusic()
+{
+    if (pOutput->volume())
+    {
+        pSoundFadeAnimation->setStartValue(pOutput->volume());
+        pSoundFadeAnimation->setEndValue(0.0f);
+        pSoundFadeAnimation->start();
+        pSoundApproachAnimation->stop();
+    }
 
 }
+void MemeWidget::startMusic()
+{
+    if (pPlayer->isPlaying() == false)
+        pPlayer->play();
+    pSoundApproachAnimation->setStartValue(pOutput->volume());
+    pSoundApproachAnimation->setEndValue(1.0f);
+    pSoundApproachAnimation->start();
+    pSoundFadeAnimation->stop();
+}
+
 
 bool MemeWidget::event(QEvent* e)
 {
     auto type = e->type();
     if(type == QEvent::HoverEnter)
     {
-        pAnimation->setDirection(QAbstractAnimation::Direction::Forward);
-        pAnimation->start();
+        pOppacityAnimation->setDirection(QAbstractAnimation::Direction::Forward);
+        pOppacityAnimation->start();
     }else if(type == QEvent::HoverLeave)
     {
-        pAnimation->setDirection(QAbstractAnimation::Direction::Backward);
-        pAnimation->start();
+        pOppacityAnimation->setDirection(QAbstractAnimation::Direction::Backward);
+        pOppacityAnimation->start();
     }
     return QWidget::event(e);
 }
@@ -111,12 +147,17 @@ QMovie& MemeWidget::movie() noexcept { return *pMovie;}
 QSize MemeWidget::sizeHint() const { return pMovieLabel->sizeHint();}
 QSize MemeWidget::minimumSizeHint() const { return pMovieLabel->sizeHint();}
 float  MemeWidget::opacity() const { return _opacity;}
+float MemeWidget::volume() const { return pOutput->volume(); }
+
 void  MemeWidget::setOpacity(float val) {
     _opacity = std::move(val);
     for(QGraphicsOpacityEffect* e : _effectList)
         e->setOpacity(_opacity);
 }
-
+void MemeWidget::setVolume(float vol)
+{
+    pOutput->setVolume(vol);
+}
 
 void MemeWidget::resizeEvent(QResizeEvent* e)
 {

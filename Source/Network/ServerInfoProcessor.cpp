@@ -272,7 +272,7 @@ int ServerInfoProcessor::processUserUnblocked(const QString& str, int start)
         moveUserToUnknownList(info);
         info->removeFlags((char)ContactInfo::Status::IsBlocked);
 
-        emit info->removed();
+        //emit info->removed();
         emit info->gotBlocked(false);
     }
 
@@ -289,7 +289,6 @@ int ServerInfoProcessor::processUserUnblockedYou(const QString& str, int start)
         moveUserToUnknownList(info);
         info->removeFlags((char)ContactInfo::Status::HasBlockedYou);
 
-        emit info->removed();
         emit info->blockedYou(false);
     }
 

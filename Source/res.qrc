@@ -1,11 +1,4 @@
 <RCC>
-    <qresource prefix="/Gifs">
-        <file>Images/Gifs/IhaveNoEnemies.gif</file>
-    </qresource>
-    <qresource prefix="/images">
-        <file>Images/Background/GreenSpace.png</file>
-        <file>Images/Background/Nebula.jpg</file>
-    </qresource>
     <qresource prefix="/styles">
         <file>menuStyle.qss</file>
         <file>style.qss</file>
@@ -13,7 +6,7 @@
     <qresource prefix="/Music">
         <file>Music/Nujabes-Aruarian Dance.m4a</file>
     </qresource>
-    <qresource prefix="/Icons">
+    <qresource prefix="/Images">
         <file>Images/Icons/AcceptIcon.png</file>
         <file>Images/Icons/AddFriendIcon.png</file>
         <file>Images/Icons/BlockedIcon.png</file>
@@ -44,6 +37,10 @@
         <file>Images/Icons/RequestsIcon.png</file>
         <file>Images/Icons/SearchIcon.png</file>
         <file>Images/Icons/unmute_icon_music.png</file>
+        <file>Images/Background/GreenSpace.png</file>
+        <file>Images/Background/Nebula.jpg</file>
+        <file>Images/Gifs/IhaveNoEnemies.gif</file>
+        <file>Images/Icons/PlusIcon.png</file>
     </qresource>
     <qresource prefix="/Special"/>
 </RCC>

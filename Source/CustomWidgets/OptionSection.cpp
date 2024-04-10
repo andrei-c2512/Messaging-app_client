@@ -17,7 +17,7 @@ ChatView::ChatView(QWidget* parent , const ChatInfo& info) : QWidget(parent) , p
     //have to do it like this because otherwise the program will crash. I can't make a pixmap without the QApplication being built
     if (imgInit == false)
     {
-        exclamationImage = ImagePainter::paintImage(QPixmap(":/images/ExclamationMark.png").scaled(exclamationImgSize), "yellow");
+        exclamationImage = ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/ExclamationMark.png").scaled(exclamationImgSize), "yellow");
     }
     setChatInfo(info);
 
@@ -63,7 +63,7 @@ void ChatView::setupUi()
     QMargins noMargins(0, 0, 0, 0);
 
     pPfpLabel = new ProfilePicLabel;
-    QPixmap pixmap = QPixmap(":/images/OpenEye.png");
+    QPixmap pixmap = QPixmap(":/Images/Images/Icons/OpenEye.png");
     pixmap = pixmap.scaled(QSize(32 , 32));
 
     ImagePainter painter(this , pixmap);
@@ -442,6 +442,7 @@ void OptionSection::setWidgetsVisible(bool visible)
     pConversationHeader->setVisible(visible);
     pListView->setTextVisible(visible);
     pSocialButton->setTextVisibility(visible);
+    pMessageButton->setVisible(visible);
 
 }
 void OptionSection::setupUi()
@@ -455,8 +456,11 @@ void OptionSection::setupUi()
     pRequestsButton->setFont(StyleRepository::Base::mediumSizeButtonFont());
     pRequestsButton->setText("Requests");
 
+
+    pMessageButton = new CustomButton(nullptr , ButtonStyleRepository::plusButton());
+
     pDotLabel = new QLabel;
-    QPixmap dotPix = QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Icons/DotIcon.png"), QColor("white")));
+    QPixmap dotPix = QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/DotIcon.png"), QColor("white")));
     int btnDim = pRequestsButton->sizeHint().height();
     dotPix = dotPix.scaled(btnDim, btnDim);
 
@@ -465,6 +469,7 @@ void OptionSection::setupUi()
     pButtonLayout = new QHBoxLayout;
     pButtonLayout->addWidget(pChatsButton);
     pButtonLayout->addWidget(pRequestsButton);
+    pButtonLayout->addWidget(pMessageButton);
     pButtonLayout->addWidget(pDotLabel);
     pButtonLayout->addStretch(1);
 
@@ -474,7 +479,7 @@ void OptionSection::setupUi()
     pConversationHeader->setFont(StyleRepository::Base::optionSectionHeaderFont());
 
     pConversationIcon = new QLabel;
-    QPixmap convPixmap = QPixmap(":/images/ChatListIcon.png");
+    QPixmap convPixmap = QPixmap(":/Images/Images/Icons/ChatListIcon.png");
     QSize btnSizeHint = pRequestsButton->sizeHint();
     convPixmap = convPixmap.scaled(QSize(btnSizeHint.height(), btnSizeHint.height()));
     ImagePainter painter(this, convPixmap);

@@ -15,6 +15,7 @@ namespace ButtonStyleRepository{
     CustomizableButtonStyleHelper* moreOptionsButton();
     CustomizableButtonStyleHelper* messageButton();
     CustomizableButtonStyleHelper* removeBlockedUserButton();
+    CustomizableButtonStyleHelper* plusButton();
 
     C_SelectableButtonStyleHelper* socialPageMenuButton(QPixmap map);
 

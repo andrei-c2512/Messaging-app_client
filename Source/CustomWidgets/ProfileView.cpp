@@ -11,7 +11,7 @@ ProfileView::ProfileView(QWidget* parent)
     pLayout = new QHBoxLayout(this);
     pLayout->setContentsMargins(noMargins);
     pProfilePicture = new ProfilePicLabel;
-    QPixmap pixmap = QPixmap(":/images/defaultPfpIcon.jpg");
+    QPixmap pixmap = QPixmap("::/Images/Images/Icons/defaultPfpIcon.jpg");
     pixmap = pixmap.scaled(iconSize);
 
     ImagePainter painter = ImagePainter(this , std::move(pixmap));

@@ -131,6 +131,7 @@ private:
     QLabel* pDotLabel;
     SelectableButton* pChatsButton;
     SelectableButton* pRequestsButton;
+    CustomButton* pMessageButton;
 
     CustomButton*     pSocialButton;
 

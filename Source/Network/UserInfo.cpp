@@ -388,6 +388,12 @@ void UserInfo::moveUserToUnknownList(ContactInfo* info)
             return info->id() == info0->id();
             });
     }
+    else if (flags & (char)ContactInfo::Status::IsBlocked)
+    {
+        contact = Tools::takeItem<ContactInfo*>(_blockedList, [info](ContactInfo* info0) {
+            return info->id() == info0->id();
+            });
+    }
 
     if (contact)
     {

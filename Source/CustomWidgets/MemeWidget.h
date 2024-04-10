@@ -16,10 +16,12 @@
 #include "StyleBase/ImagePainter.h"
 #include "CustomStyledWidgets/SelectableButton.h"
 #include <QResizeEvent>
+#include <QDir>
 
 class MemeWidget : public QWidget{
     Q_OBJECT
     Q_PROPERTY(float opacity READ opacity WRITE setOpacity)
+    Q_PROPERTY(float volume READ volume WRITE setVolume)
 public:
     MemeWidget(QWidget* parent = nullptr);
     QMediaPlayer& player() noexcept;
@@ -28,7 +30,12 @@ public:
     QMovie& movie() noexcept;
     bool event(QEvent* event) override;
     float opacity() const;
+    float volume() const;
     void setOpacity(float val);
+    void setVolume(float vol);
+
+    void fadeMusic();
+    void startMusic();
 protected:
     void resizeEvent(QResizeEvent* e) override;
 private:
@@ -42,7 +49,9 @@ private:
     QSlider*      pVolumeControl;
 
     std::vector<QGraphicsOpacityEffect*> _effectList;
-    QPropertyAnimation* pAnimation;
+    QPropertyAnimation* pOppacityAnimation;
+    QPropertyAnimation* pSoundFadeAnimation;
+    QPropertyAnimation* pSoundApproachAnimation;
     QMovie* pMovie;
     bool _paused;
 
