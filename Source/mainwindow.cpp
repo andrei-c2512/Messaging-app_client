@@ -38,10 +38,20 @@ MainWindow::MainWindow(QWidget *parent)
     pEffect = new BackgroundShiftOnMouseEffect(this, QPixmap(":/Images/Images/Background/GreenSpace.png"), 3);
     pEffect->setGeometry(QRect(QPoint(0 , 0) , screenSize));
     pServerInfoProcessor = new ServerInfoProcessor(this);
-    
-    pPageManager = new PageManager(nullptr , *pServerInfoProcessor);
+    installEventFilter(this);
+
+    pSelectorWidget = new UserSelectorWidget(nullptr, *pServerInfoProcessor);
+    QSize selectorWidgetSize = QSize(pSelectorWidget->sizeHint().width(), 600);
+    pSelectorWidget->setGeometry(QRect(QPoint(), selectorWidgetSize));
+    pSelectorWidget->setFixedHeight(selectorWidgetSize.height());
+
+    pSelectorWidget->setVisible(false);
+    pPageManager = new PageManager(nullptr , *pServerInfoProcessor , *pSelectorWidget);
     setCentralWidget(pPageManager);
-    
+  
+    //set the parent here and not at constructor so that it will be drawn over all widgets
+    pSelectorWidget->setParent(this);
+
     connect(pPageManager , &PageManager::pageChanged , pEffect , &BackgroundShiftOnMouseEffect::updateAccordingToPage);
     
     const auto& styles = QStyleFactory::keys();
@@ -139,4 +149,22 @@ void MainWindow::paintEvent(QPaintEvent* ev) {
     }*/
 
     QMainWindow::paintEvent(ev);
+}
+
+void MainWindow::mousePressEvent(QMouseEvent* ev)
+{
+    QMainWindow::mousePressEvent(ev);
+}
+
+bool MainWindow::eventFilter(QObject* obj, QEvent* ev)
+{
+    if (ev->type() == QEvent::MouseButtonPress)
+    {
+        QPoint clickPos = static_cast<QMouseEvent*>(ev)->pos();
+        QRect rect = QRect(pSelectorWidget->pos(), pSelectorWidget->size());
+    
+        if (rect.contains(clickPos) == false)
+            pSelectorWidget->flip(false);
+    }
+    return QObject::eventFilter(obj, ev);
 }

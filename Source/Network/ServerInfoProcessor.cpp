@@ -45,16 +45,16 @@ void ServerInfoProcessor::logIntoDatabase()
     QString str = QString::number((int)RequestToServer::Login) + '(' + _name + ',' +  _password + ')';
     _socket->write(str.toUtf8());
     _socket->flush();
-    emit sentRegisterRequest();
+    emit sentLoginRequest();
 }
 void ServerInfoProcessor::addMessage(const MessageInfo& info , int chatId)
 {
     QString str = QString::number((int)RequestToServer::NewMessage) +
-                  '(' + QString::number(std::move(chatId)) + ',' +
-                  info.name() + ',' +
-                  info.text() + ',' +
+                  " (" + QString::number(std::move(chatId)) + " ," +
+                  info.name() + " ," +
+                  info.text().replace(',' , "\,").replace('(' , "\(").replace(')' , "\)") + " ," +
                   info.timestamp().date().toString("yyyy-MM-dd") + ' ' + info.timestamp().time().toString() +
-                  ')';
+                  " )";
 
     _socket->write(str.toUtf8());
     _socket->flush();
@@ -74,6 +74,16 @@ void ServerInfoProcessor::createPrivateChatWithFriend(int friendId)
     _socket->flush();
 }
 
+void ServerInfoProcessor::createGroupChat(std::vector<int> list)
+{
+    QString str = QString::number((int)RequestToServer::CreateGroupChat) + '(' + QString::number(_id);
+    for (int& id : list)
+        str += ',' + QString::number(id);
+    str += ')';
+
+    _socket->write(str.toUtf8());
+    _socket->flush();
+}
 void ServerInfoProcessor::manageFriendRequest(bool accepted , int userId)
 {
     // commandNumber(userId , friendRequestUserId  , accepted)
@@ -121,6 +131,15 @@ void ServerInfoProcessor::getInfoForUsers(std::vector<int> list)
     for (int num : list)
         str += QString::number(num) + ',';
     str += QString::number(_id) + ')';
+
+    _socket->write(str.toUtf8());
+    _socket->flush();
+}
+
+void ServerInfoProcessor::updateChatName(int chatId, QString newName)
+{
+    QString str = QString::number((int)RequestToServer::UpdateChatName) + " (" +
+        QString::number(chatId) + " ," + newName.replace(',', "\,").replace('(', "\(").replace(')', "\)") + " )";
 
     _socket->write(str.toUtf8());
     _socket->flush();
@@ -202,6 +221,7 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
                 break;
             case InfoFromServer::Chats:
                 end = processChatListInfo(message , start);
+                emit chatDataReceived();
                 break;
             case InfoFromServer::Contacts:
                 end = processContactInfo(message , start);
@@ -238,12 +258,16 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
             case InfoFromServer::InfoOfUsers:
                 end = processListOfStrangers(message, start);
                 transformChats();
+                emit unknownListReceived();
                 break;
             case InfoFromServer::UserUnblocked:
                 end = processUserUnblocked(message, start);
                 break;
             case InfoFromServer::UserUnblockedYou:
                 end = processUserUnblockedYou(message, start);
+                break;
+            case InfoFromServer::NewChatName:
+                end = processNewChatName(message, start);
                 break;
             default:
                 qDebug() << "Received unkown message";
@@ -261,6 +285,21 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
     return end;
 }
 
+int ServerInfoProcessor::processNewChatName(const QString& str, int start)
+{
+    int idPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
+    int namePos = str.indexOf(chat_nameSep, idPos) + chat_nameSep.length();
+
+    int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
+    QString newName = str.mid(namePos + 1, str.indexOf('"', namePos + 1) - namePos - 1);
+
+    ChatInfo* chat = chatById(id);
+    //new name emits a signal so that it announces the change , the other method does not
+    chat->setNewName(std::move(newName));
+
+    return str.indexOf(commandEnd, namePos) + commandEnd.length();
+}
+
 int ServerInfoProcessor::processUserUnblocked(const QString& str, int start)
 {
     int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
@@ -276,7 +315,7 @@ int ServerInfoProcessor::processUserUnblocked(const QString& str, int start)
         emit info->gotBlocked(false);
     }
 
-    return str.indexOf(commandEnd, start) + commandEnd.length();
+    return str.indexOf(commandEnd, idPos) + commandEnd.length();
 }
 int ServerInfoProcessor::processUserUnblockedYou(const QString& str, int start)
 {
@@ -292,7 +331,7 @@ int ServerInfoProcessor::processUserUnblockedYou(const QString& str, int start)
         emit info->blockedYou(false);
     }
 
-    return str.indexOf(commandEnd, start) + commandEnd.length();
+    return str.indexOf(commandEnd, idPos) + commandEnd.length();
 }
 
 int ServerInfoProcessor::processListOfStrangers(const QString& str, int start)
@@ -396,6 +435,8 @@ int ServerInfoProcessor::processNewChat(const QString& str, int start)
 
     UserInfo::addChat(info);
     adaptChat(info);
+
+    connect(info, SIGNAL(newMessageInQueue(const MessageInfo&, int)), this, SLOT(addMessage(const MessageInfo&, int)));
 
     if (isSender)
         emit createdNewChat(info->id());
@@ -608,7 +649,7 @@ std::pair<ChatInfo*, int> ServerInfoProcessor::processChatInfo(const QString& st
         pos = memberListIndex;
     }
 
-    connect(chatInfo , SIGNAL(newMessageInQueue(const MessageInfo&,int)) , this , SLOT(addMessage(const MessageInfo&,int)));
+    qDebug() << connect(chatInfo, SIGNAL(newMessageInQueue(const MessageInfo&, int)), this, SLOT(addMessage(const MessageInfo&, int)));
 
     return { chatInfo , pos};
 }

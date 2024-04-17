@@ -41,6 +41,12 @@ QFont StyleRepository::Base::chatViewTitleFont() {
     return f;
 }
 
+QFont StyleRepository::Base::membersHeaderFont() {
+    QFont font("Times", 16);
+    font.setBold(true);
+    return font; 
+}
+
 QFont StyleRepository::Base::chatViewMessageFont() { return QFont("Times" , 9);}
 QFont StyleRepository::Base::informativeTextFont() { return QFont("Times" , 10);}
 QFont StyleRepository::Base::mediumSizeButtonFont() { return QFont("Times" , 15);}

@@ -16,6 +16,9 @@ SOURCES += \
     CustomStyledWidgets/LoadingAnimationWidget.cpp \
     CustomStyledWidgets/SelectableButton.cpp \
     CustomWidgets/ContactView.cpp \
+    CustomWidgets/ContactView_MembersSection.cpp \
+    CustomWidgets/ContactView_SocialPage.cpp \
+    CustomWidgets/ContactView_UserSelector.cpp \
     CustomWidgets/CustomLineEdit.cpp \
     CustomWidgets/CustomTextEdit.cpp \
     CustomWidgets/MemeWidget.cpp \
@@ -23,6 +26,7 @@ SOURCES += \
     CustomWidgets/OptionSection.cpp \
     CustomWidgets/ProfilePicLabel.cpp \
     CustomWidgets/ProfileView.cpp \
+    CustomWidgets/UserSelectorWidget.cpp \
     CustomWidgets/SearchBar.cpp \
     CustomWidgets/SignInForm.cpp \
     CustomWidgets/WarningLabel.cpp \
@@ -62,6 +66,9 @@ HEADERS += \
     CustomStyledWidgets/LoadingAnimationWidget.h \
     CustomStyledWidgets/SelectableButton.h \
     CustomWidgets/ContactView.h \
+    CustomWidgets/ContactView_MembersSection.h \
+    CustomWidgets/ContactView_SocialPage.h \
+    CustomWidgets/ContactView_UserSelector.h \
     CustomWidgets/CustomLineEdit.h \
     CustomWidgets/CustomTextEdit.h \
     CustomWidgets/MemeWidget.h \
@@ -72,6 +79,7 @@ HEADERS += \
     CustomWidgets/SearchBar.h \
     CustomWidgets/SignInForm.h \
     CustomWidgets/WarningLabel.h \
+    CustomWidgets/UserSelectorWidget.h \
     Network/ServerInfoProcessor.h \
     Network/UserInfo.h \
     PageManager.h \

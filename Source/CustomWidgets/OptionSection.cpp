@@ -1,7 +1,7 @@
 #include "OptionSection.h"
 #include "StyleBase/StyleRepository.h"
 #include "StyleBase/ButtonStyleRepository.h"
-
+#include "Tools.h"
 
 bool imgInit = false;
 static const QSize exclamationImgSize = QSize(32, 32);
@@ -383,12 +383,12 @@ void ChatListView::setList(ChatListWidget::Type type)
         pStackedWidget->setCurrentWidget(pRequestList);
 }
 
-OptionSection::OptionSection(QWidget* parent , const ServerInfoProcessor& processor , SubpageManager& subpageManager0)
+OptionSection::OptionSection(QWidget* parent , const ServerInfoProcessor& processor , SubpageManager& subpageManager0 , UserSelectorWidget& userSelectorWidget)
     :QWidget(parent) , serverProcessor(processor) , subpageManager(subpageManager0)
 {
     setAttribute(Qt::WA_Hover);
     setAttribute(Qt::WA_StyledBackground);
-    setupUi();
+    setupUi(userSelectorWidget);
     connectButtons();
     _minimumWidth = 72;
     _maximumWidth = 256;
@@ -445,7 +445,7 @@ void OptionSection::setWidgetsVisible(bool visible)
     pMessageButton->setVisible(visible);
 
 }
-void OptionSection::setupUi()
+void OptionSection::setupUi(UserSelectorWidget& userSelectorWidget)
 {
 
     pChatsButton = new SelectableButton;
@@ -458,6 +458,9 @@ void OptionSection::setupUi()
 
 
     pMessageButton = new CustomButton(nullptr , ButtonStyleRepository::plusButton());
+    connect(pMessageButton, &CustomButton::clicked, this, [=, &userSelectorWidget]() {
+        userSelectorWidget.flip(Tools::windowPos(pMessageButton) + QPoint(pMessageButton->width() , pMessageButton->height()));
+        });
 
     pDotLabel = new QLabel;
     QPixmap dotPix = QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/DotIcon.png"), QColor("white")));
@@ -535,10 +538,10 @@ void OptionSection::connectButtons() const
     });
 }
 
-OptionSectionFrame::OptionSectionFrame(QWidget* parent ,  const ServerInfoProcessor& processor , SubpageManager& pSubpageManager0)
+OptionSectionFrame::OptionSectionFrame(QWidget* parent ,  const ServerInfoProcessor& processor , SubpageManager& pSubpageManager0 , UserSelectorWidget& userSelectorWidget)
     :QWidget(parent)
 {
-    pSection = new OptionSection(this , processor , pSubpageManager0);
+    pSection = new OptionSection(this , processor , pSubpageManager0 , userSelectorWidget);
     pSection->setGeometry(QRect(0 , 0 , pSection->minimumWidth() , height()));
 }
 

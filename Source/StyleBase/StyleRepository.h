@@ -28,6 +28,7 @@ namespace StyleRepository{
     QFont chatViewMessageFont();
     QFont mediumSizeButtonFont();
     QFont optionSectionHeaderFont();
+    QFont membersHeaderFont();
 
     QColor hoverTextColor();
     QColor hoverBackgroundColor();

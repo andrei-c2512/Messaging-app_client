@@ -14,6 +14,7 @@
 #include "CustomWidgets/ProfileView.h"
 #include <QVariantAnimation>
 #include "Pages/Subpages/SubpageManager.h"
+#include "CustomWidgets/UserSelectorWidget.h"
 
 class ChatView : public QWidget{
     Q_OBJECT
@@ -111,12 +112,12 @@ private:
 class OptionSection : public QWidget{
     Q_OBJECT
 public:
-    OptionSection(QWidget* parent  , const ServerInfoProcessor& processor , SubpageManager& subpageManager0 );
+    OptionSection(QWidget* parent  , const ServerInfoProcessor& processor , SubpageManager& subpageManager0 , UserSelectorWidget& userSelectorWidget);
     int minimumWidth() const;
     int maximumWidth() const;
     void setWidgetsVisible(bool visible);
 private:
-    void setupUi();
+    void setupUi(UserSelectorWidget& userSelectorWidget);
     void connectButtons() const;
 protected:
     bool event(QEvent* ev) override;
@@ -131,8 +132,9 @@ private:
     QLabel* pDotLabel;
     SelectableButton* pChatsButton;
     SelectableButton* pRequestsButton;
-    CustomButton* pMessageButton;
 
+    CustomButton* pMessageButton;
+    //there is a weird read acces violation if I check visibility with isVisible() func
     CustomButton*     pSocialButton;
 
     ProfileView*      pProfileView;
@@ -150,7 +152,7 @@ private:
 class OptionSectionFrame : public QWidget{
     Q_OBJECT
 public:
-    OptionSectionFrame(QWidget* parent ,  const ServerInfoProcessor& processor , SubpageManager& pSubpageManager0);
+    OptionSectionFrame(QWidget* parent ,  const ServerInfoProcessor& processor , SubpageManager& pSubpageManager0 , UserSelectorWidget& userSelectorWidget);
 protected:
     void resizeEvent(QResizeEvent* event) override;
 private:

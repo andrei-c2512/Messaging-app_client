@@ -6,6 +6,7 @@
 #include <QImage>
 #include <QDateTime>
 #include <QTimeZone>
+#include <QWidget>
 //template<typename T>
 //concept usesId = requires(T & type) {
 //    type.id();
@@ -239,7 +240,17 @@ public:
         }
         return nullptr;
     }
-    
+    static QPoint windowPos(QWidget* widget)
+    {
+        QPoint pos;
+        while (widget->parent() != nullptr)
+        {
+            pos += widget->pos();
+            if (QWidget* w = qobject_cast<QWidget*>(widget->parent()))
+                widget = w;
+        }
+        return pos;
+    }
 };
 
 #endif // TOOLS_H

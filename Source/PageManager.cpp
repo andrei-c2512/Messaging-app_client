@@ -1,18 +1,18 @@
 #include "PageManager.h"
 
-PageManager::PageManager(QWidget* parent , ServerInfoProcessor& serverInfoProcessor0)
+PageManager::PageManager(QWidget* parent , ServerInfoProcessor& serverInfoProcessor0 , UserSelectorWidget& userSelectorWidget)
     :QStackedWidget(parent) , serverInfoProcessor(serverInfoProcessor0)
 {
-    setupUi();
+    setupUi(userSelectorWidget);
     setPage(PageType::Loading);
 }
 
-void PageManager::setupUi()
+void PageManager::setupUi(UserSelectorWidget& userSelectorWidget)
 {
     //creating the pages
 
     pageList = { new LoadingPage(nullptr , serverInfoProcessor) , new LoginPage(nullptr , serverInfoProcessor) , new RegisterPage(nullptr , serverInfoProcessor) ,
-                new MainPage(nullptr , serverInfoProcessor)};
+                new MainPage(nullptr , serverInfoProcessor , userSelectorWidget)};
     for(int i = 0 ; i < pageList.size() ; i++)
     {
         connectButtons(PageType(i) , pageList[i]);

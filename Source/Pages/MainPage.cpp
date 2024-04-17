@@ -2,19 +2,19 @@
 
 
 
-MainPage::MainPage(QWidget* parent , ServerInfoProcessor& processor)
+MainPage::MainPage(QWidget* parent , ServerInfoProcessor& processor  , UserSelectorWidget& userSelectorWidget)
     :Page(parent , processor)
 {
-    setupUi();
+    setupUi(userSelectorWidget);
     setObjectName("MainPage");
 }
 
-void MainPage::setupUi()
+void MainPage::setupUi(UserSelectorWidget& userSelectorWidget)
 {
     QMargins noMargins = QMargins(0 , 0 , 0 , 0);
     pManager = new SubpageManager(nullptr , serverInfoProcessor);
     pManager->setContentsMargins(noMargins);
-    pFrame = new OptionSectionFrame(nullptr , serverInfoProcessor , *pManager);
+    pFrame = new OptionSectionFrame(nullptr , serverInfoProcessor , *pManager , userSelectorWidget);
     pFrame->setContentsMargins(noMargins);
 
 

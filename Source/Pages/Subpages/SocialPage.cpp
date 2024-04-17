@@ -20,8 +20,8 @@ void ContactList::setContactList(std::vector<ContactInfo*> contactList , ServerI
         auto e = _viewList.end();
         for(auto b = _viewList.begin() + oldSize ;  b != e; ++b)
         {
-            *b = new ContactView();
-            connect(*b , &ContactView::remove , this , [=](){
+            *b = new ContactView_SocialPage();
+            connect(*b , &ContactView_SocialPage::remove , this , [=](){
                 for (int i = 0; i < _viewList.size(); i++)
                 {
                     if(*_viewList[i] == (**b))
@@ -104,7 +104,7 @@ void ContactList::stopWaiting()
     pLoadingWidget->setVisible(false);
     pLoadingWidget->stop();
 
-    for(ContactView* view : _viewList)
+    for(ContactView_SocialPage* view : _viewList)
         view->setVisible(true);
 }
 

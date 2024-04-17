@@ -6,6 +6,7 @@
 #include "BackgroundShiftOnMouseEffect.h"
 #include "PageManager.h"
 #include "Network/ServerInfoProcessor.h"
+#include "CustomWidgets/UserSelectorWidget.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -22,11 +23,15 @@ public:
     ~MainWindow();
 protected:
     void paintEvent(QPaintEvent* ev) override;
+    void mousePressEvent(QMouseEvent* ev) override;
+    bool eventFilter(QObject* obj, QEvent* ev) override;
 private:
     Ui::MainWindow *ui;
     BackgroundShiftOnMouseEffect* pEffect;
     PageManager* pPageManager;
     ServerInfoProcessor* pServerInfoProcessor;
+    UserSelectorWidget* pSelectorWidget;
+
 };
 
 #endif // MAINWINDOW_H

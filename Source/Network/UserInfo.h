@@ -82,6 +82,8 @@ public:
     ChatInfo(QObject* parent = nullptr);
     void setMessageHistory(std::vector<MessageInfo*> vec);
     void setName(QString name);
+    //also emits a signal that specifies that the name changed
+    void setNewName(QString name);
     void setMembers(std::vector<int> members_id);
     void setMembers(const QString& str);
     void setId(int id);
@@ -187,10 +189,13 @@ public:
     ContactInfo* findUser_KnownLists(int id);
     ContactInfo* findUser_UnknownList(int id);
     ContactInfo* findUser(int id);
+    std::vector<ContactInfo*> findUsers(std::vector<int> list);
     //returns true if a move occurred
     void moveUserToUnknownList(ContactInfo* id);
     void moveUserToBlocked(ContactInfo* id);
     ChatInfo* privateChatById(int id);
+    ChatInfo* chatById(int id);
+    ChatInfo& firstChat() const;
 protected:
     void adaptChat(ChatInfo* info);
     void addToStrangerList(ContactInfo* info);

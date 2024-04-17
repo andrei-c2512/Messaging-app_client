@@ -5,7 +5,7 @@
 #include <QHBoxLayout>
 #include "CustomWidgets/OptionSection.h"
 #include "Subpages/ChatPage.h"
-
+#include "CustomWidgets/UserSelectorWidget.h"
 
 class MainPage : public Page{
     Q_OBJECT
@@ -15,9 +15,9 @@ public:
       Friends
     };
 public:
-    MainPage(QWidget* parent , ServerInfoProcessor& processor);
+    MainPage(QWidget* parent , ServerInfoProcessor& processor , UserSelectorWidget& userSelectorWidget);
 private:
-    void setupUi();
+    void setupUi(UserSelectorWidget& userSelectorWidget);
 private:
     QHBoxLayout*        pLayout;
     OptionSectionFrame* pFrame;

@@ -7,6 +7,7 @@
 #include "Pages/RegisterPage.h"
 #include "Pages/LoadingPage.h"
 #include "Pages/MainPage.h"
+#include "CustomWidgets/UserSelectorWidget.h"
 
 class PageManager : public QStackedWidget{
     Q_OBJECT
@@ -18,11 +19,11 @@ public:
         Main
     };
 public:
-    PageManager(QWidget* parent , ServerInfoProcessor& pServerInfoProcessor);
+    PageManager(QWidget* parent , ServerInfoProcessor& pServerInfoProcessor , UserSelectorWidget& userSelectorWidget);
 signals:
     void pageChanged(PageType type);
 private:
-    void setupUi();
+    void setupUi(UserSelectorWidget& userSelectorWidget);
     void connectButtons(PageManager::PageType type , const Page* page);
     void setPage(PageManager::PageType type);
 private:

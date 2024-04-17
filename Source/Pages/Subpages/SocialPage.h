@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include "CustomStyledWidgets/CustomButton.h"
-#include "CustomWidgets/ContactView.h"
+#include "CustomWidgets/ContactView_SocialPage.h"
 #include <QScrollArea>
 #include "Network/ServerInfoProcessor.h"
 #include "CustomWidgets/SearchBar.h"
@@ -30,7 +30,7 @@ private:
     void updateLabel(bool isSearchBarEmpty);
 private:
     std::vector<ContactInfo*> _contactInfoList;
-    std::vector<ContactView*> _viewList;
+    std::vector<ContactView_SocialPage*> _viewList;
     qint16 usedViews;
     qint16 _loadLimit;
     QWidget* pWidget;
@@ -41,8 +41,6 @@ private:
     QLabel* pEmptyListLabel;
     LoadingAnimationWidget* pLoadingWidget;
     MemeWidget* pSpecialLabel;
-
-
 };
 
 class SocialPage : public Page{

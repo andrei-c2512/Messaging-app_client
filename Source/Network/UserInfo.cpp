@@ -39,6 +39,11 @@ void MessageInfo::setText(QString text) { _text = std::move(text);}
 ChatInfo::ChatInfo(QObject* parent) : QObject(parent) {}
 void ChatInfo::setMessageHistory(std::vector<MessageInfo*> vec) { _history = vec;}
 void ChatInfo::setName(QString name) { _name = std::move(name); emit nameChanged(_name); }
+void ChatInfo::setNewName(QString name0)
+{
+    _name = name0;
+    emit nameChanged(_name);
+}
 void ChatInfo::setMembers(std::vector<int> members_id){ _members = std::move(members_id);}
 void ChatInfo::setMembers(const QString& str) { _members = Tools::extractIntsFromArr(str); }
 
@@ -262,6 +267,17 @@ void UserInfo::addToStrangerList(ContactInfo* c)
     Tools::insertIntoArrayWhileKeepingOrder(_strangerList, c);
 }
 
+std::vector<ContactInfo*> UserInfo::findUsers(std::vector<int> list)
+{
+    std::vector<ContactInfo*> newList;
+    for (int id : list)
+    {
+        if(id != _id)
+        newList.emplace_back(findUser(id));
+    }
+
+    return newList;
+}
 
 void UserInfo::removeChat(QString name) {
     for(auto b = _chatList.begin() , e = _chatList.end(); b != e ; b++)
@@ -446,13 +462,20 @@ void UserInfo::clearAccountData() noexcept
     for(ContactInfo* contact : _friendList)
         contact->deleteLater();
 
+    for (ContactInfo* contact : _requestList)
+        contact->deleteLater();
+
     for(ContactInfo* contact : _blockedList)
+        contact->deleteLater();
+
+    for (ContactInfo* contact : _strangerList)
         contact->deleteLater();
 
     _chatList.resize(0);
     _requestChatList.resize(0);
     _friendList.resize(0);
     _blockedList.resize(0);
+    _strangerList.resize(0);
 }
 
 void UserInfo::removeRequest(int id)
@@ -481,4 +504,21 @@ ChatInfo* UserInfo::privateChatById(int id)
         }
     }
     return nullptr;
+}
+
+ChatInfo* UserInfo::chatById(int id)
+{
+    for (ChatInfo* info : _chatList)
+        if (info->id() == id)
+            return info;
+
+    return nullptr;
+}
+
+
+ChatInfo& UserInfo::firstChat() const {
+    if (_chatList.size())
+        return *_chatList.front();
+    else
+        return NullInfo::instance().nullChat();
 }

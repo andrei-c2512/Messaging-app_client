@@ -86,7 +86,9 @@ public:
         RemoveFriend,
         BlockPerson,
         GetInfoForUsers,
-        UnblockUser
+        UnblockUser,
+        CreateGroupChat,
+        UpdateChatName
     };
     enum class InfoFromServer {
         SignedIn,  // will inform the user that he has succesfully signed in
@@ -102,7 +104,8 @@ public:
         YouGotBlocked,
         InfoOfUsers,
         UserUnblocked,
-        UserUnblockedYou
+        UserUnblockedYou,
+        NewChatName
     };
 public:
     ServerInfoProcessor(QObject* object = nullptr);
@@ -119,8 +122,10 @@ public slots:
     void getInfoForUsers(std::vector<int> list);
     void onReadyRead();
     void createPrivateChatWithFriend(int friendId);
+    void createGroupChat(std::vector<int> list);
     void blockUser(int id);
     void unblockUser(int id);
+    void updateChatName(int chatId, QString newName);
     void setName(QString str) override;
     void setPassword(QString pas) override;
     void setEmail(QString email) override;
@@ -141,10 +146,12 @@ signals:
     void contactInfoLoaded();
     void newChatData();
     void newFriend();
+    void chatDataReceived();
     void newFriendRequest();
     void newSearchData();
     void createdNewChat(int id);
     void addedToNewChat(int id);
+    void unknownListReceived();
 private:
     //returns the position it remained at
     int processCommand(const QString& str , int start);
@@ -166,6 +173,7 @@ private:
     int processListOfStrangers(const QString& str, int start);
     int processUserUnblocked(const QString& str, int start);
     int processUserUnblockedYou(const QString& str, int start);
+    int processNewChatName(const QString& str, int start);
 
     static std::vector<int> extractIntsFromArr(const QString& str);
     void requestDataOfUnknownUsers();
