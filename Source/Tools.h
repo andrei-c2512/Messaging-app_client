@@ -112,11 +112,11 @@ public:
         }
         return QDateTime(QDate(date[0] , date[1] , date[2]) , QTime(time[0] , time[1] , time[2]) , QTimeZone(QTimeZone::LocalTime));
     }
-    static std::vector<int> extractIntsFromArr(const QString& str)
+    static std::vector<int> extractIntsFromArr(const QString& str, int start = 0)
     {
         std::vector<int> memberList;
         QString nrStr;
-        qint16 i = str.indexOf('{') + 1;
+        qint16 i = str.indexOf('{' , start) + 1;
 
         while (str[i] != '}')
         {

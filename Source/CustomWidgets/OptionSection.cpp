@@ -258,8 +258,7 @@ void ChatListWidget::addViews(int n)
             pView->setActive(true);
             if(lastChatView)
                 lastChatView->setActive(false);
-
-            lastChatView = pView;
+            
         });
     }
 }

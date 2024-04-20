@@ -21,12 +21,12 @@ void ContactList::setContactList(std::vector<ContactInfo*> contactList , ServerI
         for(auto b = _viewList.begin() + oldSize ;  b != e; ++b)
         {
             *b = new ContactView_SocialPage();
-            connect(*b , &ContactView_SocialPage::remove , this , [=](){
+            connect(*b , &ContactView_SocialPage::remove , this , [=](int id){
                 for (int i = 0; i < _viewList.size(); i++)
                 {
-                    if(*_viewList[i] == (**b))
+                    if(_viewList[i]->contactInfo()->id() == id)
                     {
-                        (*b)->deleteLater();
+                        _viewList[i]->deleteLater();
                         _viewList.erase(_viewList.begin() + i);
                         break;
                     }

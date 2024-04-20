@@ -35,12 +35,14 @@ namespace StyleRepository{
     QColor hoverBorderColor();
 
     QPixmap defaultPfpPixmap();
+    QPixmap crownPixmap();
     }
     namespace MenuStyle {
         QString qMenuStyleSheet();
         QPixmap callPixmap();
         QPixmap removePixmap();
         QPixmap blockPixmap();
+        QPixmap messagePixmap();
         QFont menuFont();
     }
     namespace AddButton{

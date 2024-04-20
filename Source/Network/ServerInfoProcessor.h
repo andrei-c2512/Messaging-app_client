@@ -66,6 +66,8 @@ static const QString chat_historySep = "\"" + chatPrefix + "History\":";
 static const QString chat_memberListSep = "\"" + chatPrefix + "MemberList\":";
 static const QString chat_privateSep = "\"" + chatPrefix + "Private\":";
 static const QString chat_isSenderSep = "\"" + chatPrefix + "isSender\":";
+static const QString chat_adminIdSep = "\"" + chatPrefix + "Admin\":";
+static const QString chat_readOnlyListSep = "\"" + chatPrefix + "ReadOnlyList\":";
 
 //for user info
 static const QString userPrefix = "user";

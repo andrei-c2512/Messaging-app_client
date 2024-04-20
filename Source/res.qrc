@@ -41,6 +41,7 @@
         <file>Images/Background/Nebula.jpg</file>
         <file>Images/Gifs/IhaveNoEnemies.gif</file>
         <file>Images/Icons/PlusIcon.png</file>
+        <file>Images/Icons/CrownIcon.png</file>
     </qresource>
     <qresource prefix="/Special"/>
 </RCC>

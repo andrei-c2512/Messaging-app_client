@@ -52,7 +52,7 @@ void ServerInfoProcessor::addMessage(const MessageInfo& info , int chatId)
     QString str = QString::number((int)RequestToServer::NewMessage) +
                   " (" + QString::number(std::move(chatId)) + " ," +
                   info.name() + " ," +
-                  info.text().replace(',' , "\,").replace('(' , "\(").replace(')' , "\)") + " ," +
+                  info.text().replace(',' , "\\,").replace('(' , "\\(").replace(')' , "\\)") + " ," +
                   info.timestamp().date().toString("yyyy-MM-dd") + ' ' + info.timestamp().time().toString() +
                   " )";
 
@@ -309,7 +309,7 @@ int ServerInfoProcessor::processUserUnblocked(const QString& str, int start)
     if (info)
     {
         moveUserToUnknownList(info);
-        info->removeFlags((char)ContactInfo::Status::IsBlocked);
+        info->removeFlags(ContactInfo::Status::IsBlocked);
 
         //emit info->removed();
         emit info->gotBlocked(false);
@@ -326,7 +326,7 @@ int ServerInfoProcessor::processUserUnblockedYou(const QString& str, int start)
     if (info)
     {
         moveUserToUnknownList(info);
-        info->removeFlags((char)ContactInfo::Status::HasBlockedYou);
+        info->removeFlags(ContactInfo::Status::HasBlockedYou);
 
         emit info->blockedYou(false);
     }
@@ -336,6 +336,7 @@ int ServerInfoProcessor::processUserUnblockedYou(const QString& str, int start)
 
 int ServerInfoProcessor::processListOfStrangers(const QString& str, int start)
 {
+    //this was before adding the flag macros
     std::vector<ContactInfo*> vec;
     int idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
     start = str.indexOf(contact_idSep, start);
@@ -361,7 +362,7 @@ int ServerInfoProcessor::processListOfStrangers(const QString& str, int start)
             flags = flags | (char)ContactInfo::Status::Online;
 
         ContactInfo* contact = new ContactInfo(this, str.mid(namePos + 1, str.indexOf('"', namePos + 1) - namePos - 1),
-            flags,
+            ContactInfo::Status(flags),
             str.mid(lastSeenPos + 1, str.indexOf('"', lastSeenPos + 1) - lastSeenPos - 1));
 
         QString aux = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
@@ -403,10 +404,10 @@ int ServerInfoProcessor::processGettingBlocked(const QString& str, int start)
     if (info)
     {
         moveUserToUnknownList(info);
-        info->addFlags((char)ContactInfo::Status::HasBlockedYou);
+        info->addFlags(ContactInfo::Status::HasBlockedYou);
 
         emit info->blockedYou(true);
-        emit info->removed();
+        emit info->removed(info->id());
     }
 
     return str.indexOf(commandEnd, start) + commandEnd.length();
@@ -421,6 +422,8 @@ int ServerInfoProcessor::processNewChat(const QString& str, int start)
     int historyPos = str.indexOf(chat_historySep, namePos) + chat_historySep.length();
     int memberlistPos = str.indexOf(chat_memberListSep, historyPos) + chat_memberListSep.length();
     int privatePos = str.indexOf(chat_privateSep, memberlistPos) + chat_privateSep.length();
+    int adminPos = str.indexOf(chat_adminIdSep, privatePos) + chat_adminIdSep.length();
+    int readOnlyListPos = str.indexOf(chat_readOnlyListSep, adminPos) + chat_readOnlyListSep.length();
     int isSenderPos = str.indexOf(chat_isSenderSep, privatePos) + chat_isSenderSep.length();
 
     ChatInfo* info = new ChatInfo(this);
@@ -429,7 +432,8 @@ int ServerInfoProcessor::processNewChat(const QString& str, int start)
     info->setMessageHistory(extractHistoryFromChat(str, historyPos));
     info->setMembers(str.mid(memberlistPos + 1, str.indexOf('"', memberlistPos + 1) - memberlistPos - 1));
     info->setType(str[privatePos + 1] == 't');
-
+    info->setAdminId(str.mid(adminPos + 1, str.indexOf('"', adminPos + 1) - adminPos - 1).toInt());
+    info->setReadOnlyMembers(Tools::extractIntsFromArr(str, readOnlyListPos));
 
     bool isSender = str[isSenderPos + 1] == 't';
 
@@ -445,7 +449,53 @@ int ServerInfoProcessor::processNewChat(const QString& str, int start)
 
     return str.indexOf(commandEnd, isSenderPos) + commandEnd.length();
 }
+std::pair<ChatInfo*, int> ServerInfoProcessor::processChatInfo(const QString& str, int start)
+{
+    /* example of chat info data
+     * ~I1:"Id":"2""Name":"Group chat3""History":{"(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")","(Leo,\"Ce te pisi atata\",\"2021-04-05 00:00:00\")"}
+     * "MemberList":"{1,2,5}""Name":"Group chat3""History":{"(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")","(Leo,\"Ce te pisi atata\",\"2021-04-05 00:00:00\"
+     * )"}"MemberList":"{1,2,5}""Name":"Group chat3""History":{"(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")","(Leo,\"Ce te pisi atata\",
+     * \"2021-04-05 00:00:00\")"}"MemberList":"{1,2,5}""Name":"Group chat3""History":{"(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")",
+     * "(\"Leo Gabriel\",\"Ce te pisi atata\",\"2021-04-05 00:00:00\")"}"MemberList":"{1,2,5}"\~
+     * */
 
+    int pos = start;
+
+    ChatInfo* chatInfo = new ChatInfo(this);
+    //while(lastPos < pos)
+    {
+        int idIndex = str.indexOf(chat_idSep, pos) + chat_idSep.length();
+        int nameIndex = str.indexOf(chat_nameSep, idIndex) + chat_nameSep.length();
+        int historyIndex = str.indexOf(chat_historySep, nameIndex) + chat_historySep.length();
+        int isPrivateIndex = str.indexOf(chat_privateSep, historyIndex) + chat_privateSep.length();
+        int memberListIndex = str.indexOf(chat_memberListSep, isPrivateIndex) + chat_memberListSep.length();
+        int adminIndex = str.indexOf(chat_adminIdSep, memberListIndex) + chat_adminIdSep.length();
+        int readOnlyListIndex = str.indexOf(chat_readOnlyListSep, adminIndex) + chat_readOnlyListSep.length();
+
+        //added 2 because ":"" (of length 2) will always follow after nameSep
+        QString auW = str.mid(idIndex + 1, str.indexOf('"', idIndex + 1) - idIndex - 1);
+        chatInfo->setId(str.mid(idIndex + 1, str.indexOf('"', idIndex + 1) - idIndex - 1).toInt());
+        chatInfo->setName(str.mid(nameIndex + 1, str.indexOf('"', nameIndex + 1) - nameIndex - 1));
+        chatInfo->setMessageHistory(extractHistoryFromChat(str, historyIndex));
+        chatInfo->setType(str[isPrivateIndex + 1] == 't');
+
+        chatInfo->setMembers(Tools::extractIntsFromArr(str, memberListIndex));
+        auto arr = Tools::extractIntsFromArr(str, memberListIndex);
+        QString output;
+        for (int nr : arr)
+            output += QString::number(nr) + ',';
+        qDebug() << output;
+
+        chatInfo->setAdminId(str.mid(adminIndex + 1, str.indexOf('"', adminIndex + 1) - adminIndex - 1).toInt());
+        chatInfo->setReadOnlyMembers(Tools::extractIntsFromArr(str, readOnlyListIndex));
+
+        pos = memberListIndex;
+    }
+
+    qDebug() << connect(chatInfo, SIGNAL(newMessageInQueue(const MessageInfo&, int)), this, SLOT(addMessage(const MessageInfo&, int)));
+
+    return { chatInfo , pos };
+}
 int ServerInfoProcessor::processNewFriendRequest(const QString& str , int start)
 {
     int idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
@@ -463,7 +513,7 @@ int ServerInfoProcessor::processNewFriendRequest(const QString& str , int start)
         // + 2 because - once to go to next pos '"' , and another to go to the non '"' pos
         //because otherwise , it would return the pos of the first '"' which will make it read an empty string
         ContactInfo* contact = new ContactInfo(this , str.mid(namePos + 1 , str.indexOf('"' , namePos + 1) - namePos - 1),
-                                               str[onlinePos + 1] == 't',
+                                               ContactInfo::Status(int(str[onlinePos + 1] == 't')),
                                                str.mid(lastSeenPos + 1, str.indexOf('"' , lastSeenPos + 1) - lastSeenPos - 1));
 
         QString aux = str.mid(idPos + 1 , str.indexOf('"' , idPos + 1) - idPos - 1);
@@ -475,7 +525,7 @@ int ServerInfoProcessor::processNewFriendRequest(const QString& str , int start)
         if(str[isBlockedPos + 1] == 't')
             flags = flags | (char)ContactInfo::Status::HasBlockedYou;
 
-        contact->setFlags(flags);
+        contact->setFlags((ContactInfo::Status)flags);
 
         UserInfo::addToRequestList(contact);
         start = str.indexOf(contact_idSep , lastSeenPos);
@@ -520,7 +570,7 @@ int ServerInfoProcessor::processSearchedForList(const QString& str , int start)
 
 
         ContactInfo* contact = new ContactInfo(this , str.mid(namePos + 1 , str.indexOf('"' , namePos + 1) - namePos - 1),
-                                               flags,
+                                               (ContactInfo::Status)flags,
                                                str.mid(lastSeenPos + 1, str.indexOf('"' , lastSeenPos + 1) - lastSeenPos - 1));
 
         QString aux = str.mid(idPos + 1 , str.indexOf('"' , idPos + 1) - idPos - 1);
@@ -601,58 +651,7 @@ int ServerInfoProcessor::processChatListInfo(const QString& str , int start)
     emit newChatData();
     return str.indexOf(commandEnd , pos) + commandEnd.length();
 }
-std::pair<ChatInfo*, int> ServerInfoProcessor::processChatInfo(const QString& str , int start)
-{
-    /* example of chat info data
-     * ~I1:"Id":"2""Name":"Group chat3""History":{"(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")","(Leo,\"Ce te pisi atata\",\"2021-04-05 00:00:00\")"}
-     * "MemberList":"{1,2,5}""Name":"Group chat3""History":{"(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")","(Leo,\"Ce te pisi atata\",\"2021-04-05 00:00:00\"
-     * )"}"MemberList":"{1,2,5}""Name":"Group chat3""History":{"(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")","(Leo,\"Ce te pisi atata\",
-     * \"2021-04-05 00:00:00\")"}"MemberList":"{1,2,5}""Name":"Group chat3""History":{"(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")",
-     * "(\"Leo Gabriel\",\"Ce te pisi atata\",\"2021-04-05 00:00:00\")"}"MemberList":"{1,2,5}"\~
-     * */
 
-    int pos = start;
-
-    ChatInfo* chatInfo = new ChatInfo(this);
-    //while(lastPos < pos)
-    {
-        int idIndex = str.indexOf(chat_idSep , pos) + chat_idSep.length();
-        int nameIndex = str.indexOf(chat_nameSep , idIndex) + chat_nameSep.length();
-        int historyIndex = str.indexOf(chat_historySep , nameIndex) + chat_historySep.length();
-        int isPrivateIndex = str.indexOf(chat_privateSep, historyIndex) + chat_privateSep.length();
-        int memberListIndex = str.indexOf(chat_memberListSep , isPrivateIndex) + chat_memberListSep.length();
-
-        //added 2 because ":"" (of length 2) will always follow after nameSep
-        QString auW = str.mid(idIndex + 1 , str.indexOf('"' , idIndex + 1) - idIndex - 1);
-        chatInfo->setId(str.mid(idIndex + 1 , str.indexOf('"' , idIndex + 1) - idIndex - 1).toInt());
-        chatInfo->setName(str.mid(nameIndex + 1 , str.indexOf('"' , nameIndex + 1) - nameIndex - 1));
-        chatInfo->setMessageHistory(extractHistoryFromChat(str , historyIndex));
-        chatInfo->setType(str[isPrivateIndex + 1] == 't');
-
-        memberListIndex = str.indexOf('{' , memberListIndex) + 1;
-        QString nrStr;
-        std::vector<int> memberList;
-        while(str[memberListIndex] != '}')
-        {
-            if(str[memberListIndex] == ',')
-            {
-                memberList.emplace_back(nrStr.toInt());
-                nrStr ="";
-            }
-            else
-                nrStr += str[memberListIndex];
-            memberListIndex++;
-        }
-        memberList.emplace_back(nrStr.toInt());
-
-        chatInfo->setMembers(std::move(memberList));
-        pos = memberListIndex;
-    }
-
-    qDebug() << connect(chatInfo, SIGNAL(newMessageInQueue(const MessageInfo&, int)), this, SLOT(addMessage(const MessageInfo&, int)));
-
-    return { chatInfo , pos};
-}
 
 int ServerInfoProcessor::processContactInfo(const QString& str , int start)
 {
@@ -663,15 +662,15 @@ int ServerInfoProcessor::processContactInfo(const QString& str , int start)
 
     _friendList = processContactList(str , ownFriendListPos , requestListPos - contactSeps[1].length());
     for (ContactInfo* fr : _friendList)
-        fr->addFlags(char(ContactInfo::Status::Friend));
+        fr->addFlags(ContactInfo::Status::Friend);
 
     _requestList = processContactList(str , requestListPos , blockedListPos - contactSeps[2].length());
     for (ContactInfo* request : _requestList)
-        request->addFlags(char(ContactInfo::Status::HasRequest));
+        request->addFlags(ContactInfo::Status::HasRequest);
 
     _blockedList = processContactList(str , blockedListPos , endPos);
     for (ContactInfo* enemy : _blockedList)
-        enemy->addFlags(char(ContactInfo::Status::IsBlocked));
+        enemy->addFlags(ContactInfo::Status::IsBlocked);
 
 
     Tools::sort<ContactInfo*>(_friendList, [](ContactInfo* lhs, ContactInfo* rhs) {
@@ -699,7 +698,7 @@ std::vector<ContactInfo*>  ServerInfoProcessor::processContactList(const QString
         // + 2 because - once to go to next pos '"' , and another to go to the non '"' pos
         //because otherwise , it would return the pos of the first '"' which will make it read an empty string
         ContactInfo* contact = new ContactInfo(this , str.mid(namePos + 1 , str.indexOf('"' , namePos + 1) - namePos - 1),
-                                               (str[onlinePos + 1] == 't') ? (char)ContactInfo::Status::Online : 0,
+                                               (str[onlinePos + 1] == 't') ? ContactInfo::Status::Online : ContactInfo::Status::Null,
                                                str.mid(lastSeenPos + 1, str.indexOf('"' , lastSeenPos + 1) - lastSeenPos - 1));
 
         QString aux = str.mid(idPos + 1 , str.indexOf('"' , idPos + 1) - idPos - 1);
@@ -713,15 +712,17 @@ std::vector<ContactInfo*>  ServerInfoProcessor::processContactList(const QString
 
 int ServerInfoProcessor::processNewFriendInfo(const QString& str , int start)
 {
-    int namePos = str.indexOf(contact_nameSep , start) + contact_nameSep.length();
+    int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
+    int namePos = str.indexOf(contact_nameSep , idPos) + contact_nameSep.length();
     int onlinePos = str.indexOf(contact_onlineSep , namePos) + contact_onlineSep.length();
     int lastSeenPos = str.indexOf(contact_lastSeenSep , onlinePos) + contact_lastSeenSep.length();
     int friendListPos = str.indexOf(contact_friendListSep , lastSeenPos) + contact_friendListSep.length();
 
     ContactInfo* contact = new ContactInfo(this);
+    contact->setId(str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt());
     contact->setName( str.mid(namePos + 1 , str.indexOf('"' , namePos + 1) - namePos - 1));
     if(str[onlinePos + 1] == 't')
-        contact->setFlags((char)ContactInfo::Status::Online);
+        contact->setFlags(ContactInfo::Status::Online);
 
     contact->setLastSeen(str.mid(lastSeenPos + 1, str.indexOf('"' , lastSeenPos + 1) - lastSeenPos - 1));
 
@@ -782,7 +783,7 @@ std::pair<MessageInfo*, int> ServerInfoProcessor::processMessageInfo(const QStri
     int paranthesesEndPos =  str.indexOf(')' , timestampBegin);
 
     m->setName(str.mid(nameBegin , textBegin - nameBegin - message_textSep.length()));
-    m->setText(str.mid(textBegin , timestampBegin - textBegin - message_timestampSep.length()));
+    m->setText(str.mid(textBegin , timestampBegin - textBegin - message_timestampSep.length()).replace("\\\"" , "\""));
     /* the character ')' marks the end of the message*/
     m->setTimestamp(str.mid(timestampBegin , paranthesesEndPos - timestampBegin - 1));
 

@@ -20,12 +20,12 @@ void SelectorContactList::setContactList(std::vector<ContactInfo*> contactList)
         for (auto b = _viewList.begin() + oldSize; b != e; ++b)
         {
             *b = new ContactView_UserSelector();
-            connect(*b, &ContactView_UserSelector::remove, this, [=]() {
+            connect(*b, &ContactView_UserSelector::remove, this, [=](int id) {
                 for (int i = 0; i < _viewList.size(); i++)
                 {
-                    if (*_viewList[i] == (**b))
+                    if (_viewList[i]->contactInfo()->id() == id)
                     {
-                        (*b)->deleteLater();
+                        _viewList[i]->deleteLater();
                         _viewList.erase(_viewList.begin() + i);
                         break;
                     }

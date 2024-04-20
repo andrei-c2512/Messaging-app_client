@@ -13,7 +13,6 @@
 #include <QMovie>
 #include "CustomWidgets/MemeWidget.h"
 #include "CustomStyledWidgets/LoadingAnimationWidget.h"
-#include "ChatPage.h"
 #include <QStackedWidget>
 
 class ContactList : public QScrollArea{

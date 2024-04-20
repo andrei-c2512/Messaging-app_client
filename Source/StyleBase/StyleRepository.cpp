@@ -12,9 +12,13 @@ static QString qMenuStyleStr;
 static std::unique_ptr<QPixmap> _removePixmap;
 static std::unique_ptr<QPixmap> _callPixmap;
 static std::unique_ptr<QPixmap> _blockPixmap;
+static std::unique_ptr<QPixmap> _messagePixmap;
 
 QSize pfpImageSize = { 32 , 32 };
 static std::unique_ptr<QPixmap> _pfpPixmap;
+
+QSize crownImageSize = { 32 , 32 };
+static std::unique_ptr<QPixmap> _crownPixmap;
 
 void StyleRepository::initializeVariables()
 {
@@ -22,6 +26,8 @@ void StyleRepository::initializeVariables()
     _callPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/CallIcon.png"), "white")));
     _blockPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/BlockIcon.png"), QColor(215, 38, 61))));
     _pfpPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/defaultPfpIcon.jpg").scaled(pfpImageSize), "white")));
+    _crownPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/CrownIcon.png").scaled(crownImageSize), QColor("yellow"))));
+    _messagePixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/MessageIcon.png"), QColor("white"))));
 }
 
 /*Base colors beggin */
@@ -57,6 +63,7 @@ QColor StyleRepository::Base::hoverBackgroundColor(){return QColor(9, 10, 11);}
 QColor StyleRepository::Base::hoverBorderColor() { return QColor(255, 255, 255);};
 
 QPixmap StyleRepository::Base::defaultPfpPixmap() { return *_pfpPixmap;  }
+QPixmap StyleRepository::Base::crownPixmap() { return *_crownPixmap; }
 
 /*Base colors end */
 
@@ -85,7 +92,7 @@ QString StyleRepository::MenuStyle::qMenuStyleSheet()
 QPixmap StyleRepository::MenuStyle::callPixmap(){ return *_callPixmap;}
 QPixmap StyleRepository::MenuStyle::removePixmap(){ return *_removePixmap;}
 QPixmap StyleRepository::MenuStyle::blockPixmap(){ return *_blockPixmap;}
-
+QPixmap StyleRepository::MenuStyle::messagePixmap() { return *_messagePixmap; }
 QFont StyleRepository::MenuStyle::menuFont() { return QFont("Tiems", 14); }
 
 

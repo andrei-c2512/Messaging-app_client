@@ -7,7 +7,7 @@
 #include <QTimeZone>
 #include <algorithm>
 #include "Tools.h"
-
+#include <QFlags>
 class MessageInfo : public QObject{
     Q_OBJECT
 public:
@@ -33,18 +33,20 @@ class ContactInfo : public QObject{
     Q_OBJECT
 public:
     enum class Status {
+        Null = 0 ,
         Online = 1, 
         HasRequest = 2,
         IsBlocked = 4,
         HasBlockedYou = 8,
         Friend = 16
     };
+    Q_DECLARE_FLAGS(ContactStatus, Status)
 public:
     ContactInfo(QObject* parent = nullptr);
-    ContactInfo(QObject* parent, QString name , char flags , QString lastSeen);
-    void setFlags(char f);
-    void addFlags(char f);
-    void removeFlags(char f);
+    ContactInfo(QObject* parent, QString name , ContactStatus flags , QString lastSeen);
+    void setFlags(ContactStatus f);
+    void addFlags(ContactStatus f);
+    void removeFlags(ContactStatus f);
     void setName(QString name);
     void setLastSeen(QString lastSeen);
     void setFriendList(std::vector<int> friendList0);
@@ -55,14 +57,14 @@ public:
     QString lastSeen() const;
     const std::vector<int>& friendList() const;
     int id() const;
-    char flags() const;
+    ContactStatus flags() const;
 
 
     bool operator<(const ContactInfo& info);
     bool operator>(const ContactInfo& info);
     bool operator==(const ContactInfo& info);
 signals:
-    void removed();
+    void removed(int id);
     //true for blocking , false for unblocking
     void gotBlocked(bool b);
     void blockedYou(bool b);
@@ -70,11 +72,11 @@ private:
     int _id;
     QString _name;
     QString _lastSeen;
-    char _flags;
+    ContactStatus _flags;
 
     std::vector<int> _friendList;
 };
-
+Q_DECLARE_OPERATORS_FOR_FLAGS(ContactInfo::ContactStatus)
 
 class ChatInfo : public QObject{
     Q_OBJECT
@@ -87,6 +89,9 @@ public:
     void setMembers(std::vector<int> members_id);
     void setMembers(const QString& str);
     void setId(int id);
+    void setReadOnlyMembers(std::vector<int> members_id);
+    void setReadOnlyMembers(const QString& str);
+    void setAdminId(int id);
     void setType(bool isPrivate);
     //the chat doesn't know who is the user of this app in the chat , so I have to give him the info
     void connectSlotsForPrivateChats(ContactInfo* info);
@@ -104,9 +109,11 @@ public:
     QString name() const;
     bool isPrivate() const;
     const std::vector<int>& members() const;
+    const std::vector<int>& readOnlyMembers() const;
     const std::vector<MessageInfo*>& history() const;
     const MessageInfo& back() const;
     int id() const;
+    int adminId() const;
     const std::vector<MessageInfo*> lastNMessages(int n) const;
     const std::vector<MessageInfo*> lastNMessages(int start , int n) const;
 
@@ -126,6 +133,8 @@ private:
     std::vector<MessageInfo*> _history;
     std::vector<MessageInfo*> _queue;
     std::vector<int> _members;
+    std::vector<int> _readOnlyMembers;
+    int _adminId;
     QString _name;
     int _id;
     bool _waitingForResponse;
@@ -167,6 +176,7 @@ public:
     void addFriend(ContactInfo* contact);
     void addToBlockedList(ContactInfo* contact);
     void addToRequestList(ContactInfo* contact);
+  
     void removeChat(QString name);
 
     void removeFriend(int id);

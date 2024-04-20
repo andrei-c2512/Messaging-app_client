@@ -12,7 +12,7 @@ public:
 
 class ContactView_UserSelector : public ContactView {
 public:
-	using ContactView::ContactView;
+    ContactView_UserSelector(QWidget* parent = nullptr);
     void attatchCheckbox();
     //works only if the options widget with the checkbox is active
     void setChecked(bool status);

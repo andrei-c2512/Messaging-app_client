@@ -47,6 +47,10 @@ void ChatInfo::setNewName(QString name0)
 void ChatInfo::setMembers(std::vector<int> members_id){ _members = std::move(members_id);}
 void ChatInfo::setMembers(const QString& str) { _members = Tools::extractIntsFromArr(str); }
 
+void ChatInfo::setReadOnlyMembers(std::vector<int> members_id) { _readOnlyMembers = std::move(members_id); }
+void ChatInfo::setReadOnlyMembers(const QString& str) { _readOnlyMembers = Tools::extractIntsFromArr(str); }
+void ChatInfo::setAdminId(int id) { _adminId = id; }
+
 void ChatInfo::setId(int id) { _id = std::move(id);}
 void ChatInfo::setType(bool isPrivate) { _private = isPrivate; }
 
@@ -58,6 +62,8 @@ int ChatInfo::id() const { return _id;}
 bool ChatInfo::isPrivate() const { return _private; }
 
 const std::vector<int>& ChatInfo::members() const { return _members;}
+const std::vector<int>& ChatInfo::readOnlyMembers() const { return _readOnlyMembers;  }
+int ChatInfo::adminId() const { return _adminId; }
 const std::vector<MessageInfo*>& ChatInfo::history() const { return _history;}
 const MessageInfo& ChatInfo::back() const { return *_history.back();}
 MessageInfo* ChatInfo::addMessage(QString name , QString message)
@@ -162,12 +168,12 @@ bool ChatInfo::operator==(ChatInfo* rhs) { return _id == rhs->id(); }
 ContactInfo::ContactInfo(QObject* parent) : QObject(parent)
 {}
 
-ContactInfo::ContactInfo(QObject* parent , QString name , char flags0 , QString lastSeen )
+ContactInfo::ContactInfo(QObject* parent , QString name , ContactStatus flags0 , QString lastSeen )
     : QObject(parent) , _flags(flags0) , _name(std::move(name)), _lastSeen(std::move(lastSeen))
 {}
-void ContactInfo::setFlags(char f) { _flags = f; }
-void ContactInfo::addFlags(char f) { _flags = _flags | f;  }
-void ContactInfo::removeFlags(char f) { _flags = _flags & ~f; }
+void ContactInfo::setFlags(ContactStatus f) { _flags = f; }
+void ContactInfo::addFlags(ContactStatus f) { _flags = _flags | f;  }
+void ContactInfo::removeFlags(ContactStatus f) { _flags = _flags & ~f; }
 
 void ContactInfo::setName(QString name) { _name = std::move(name);}
 void ContactInfo::setLastSeen(QString lastSeen) { _lastSeen = std::move(lastSeen);}
@@ -178,7 +184,7 @@ QString ContactInfo::name() const { return _name;}
 QString ContactInfo::lastSeen() const { return _lastSeen;}
 const std::vector<int>& ContactInfo::friendList() const  {return _friendList;}
 int ContactInfo::id() const { return _id; }
-char ContactInfo::flags() const { return _flags; }
+ContactInfo::ContactStatus ContactInfo::flags() const { return _flags; }
 
 
 
@@ -381,9 +387,9 @@ void UserInfo::removeFriend(int id)
         ContactInfo* f = _friendList[i];
         if (_friendList[i]->id() == id)
         {
-            emit f->removed();
-            f->deleteLater();
+            emit f->removed(id);
             _friendList.erase(_friendList.begin() + i);
+            addToStrangerList(f);
         }
     }
 }
@@ -413,7 +419,7 @@ void UserInfo::moveUserToUnknownList(ContactInfo* info)
 
     if (contact)
     {
-        contact->removeFlags((char)ContactInfo::Status::Friend | (char)ContactInfo::Status::HasRequest);
+        contact->removeFlags(ContactInfo::Status::Friend | ContactInfo::Status::HasRequest);
         Tools::insertIntoArrayWhileKeepingOrder(_strangerList, contact);
     }
 }
@@ -438,8 +444,8 @@ void UserInfo::moveUserToBlocked(ContactInfo* info)
     if (contact)
     {
         Tools::insertIntoArrayWhileKeepingOrder(_blockedList, contact);
-        contact->addFlags((char)ContactInfo::Status::IsBlocked);
-        contact->removeFlags((char)ContactInfo::Status::Friend | (char)ContactInfo::Status::HasRequest);
+        contact->addFlags(ContactInfo::Status::IsBlocked);
+        contact->removeFlags(ContactInfo::Status::Friend | ContactInfo::Status::HasRequest);
     }
 }
 
@@ -498,7 +504,7 @@ ChatInfo* UserInfo::privateChatById(int id)
     {
         if (info->isPrivate())
         {
-            auto list = info->members();
+            auto& list = info->members();
             if (list[0] == id || list[1] == id)
                 return info;
         }

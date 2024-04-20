@@ -19,6 +19,7 @@ class ContactView : public QWidget{
 public:
     ContactView(QWidget* parent = nullptr);
     void setContactInfo(ContactInfo& info);
+    void setContactInfo(UserInfo& info);
     void setProfilePicture(QPixmap pixmap);
     void setName(QString name);
     void setNameFont(const QFont& font);
@@ -30,7 +31,7 @@ public:
     bool operator==(const ContactView& rhs);
     const ContactInfo* contactInfo() const;
 signals:
-    void remove();
+    void remove(int id);
 protected:
     const ContactInfo* pInfo;
     QHBoxLayout* pLayout;
