@@ -65,6 +65,7 @@ public:
     bool operator==(const ContactInfo& info);
 signals:
     void removed(int id);
+    //void moved(int id);
     //true for blocking , false for unblocking
     void gotBlocked(bool b);
     void blockedYou(bool b);
@@ -93,6 +94,7 @@ public:
     void setReadOnlyMembers(const QString& str);
     void setAdminId(int id);
     void setType(bool isPrivate);
+    void removeMember(int id , int userId , bool forcefullyRemoved);
     //the chat doesn't know who is the user of this app in the chat , so I have to give him the info
     void connectSlotsForPrivateChats(ContactInfo* info);
 
@@ -129,6 +131,8 @@ signals:
     void nameChanged(const QString& name);
     void gotBlocked(bool b);
     void blockedYou(bool b);
+    void memberRemoved(int id);
+    void removed(bool forcefully = true);
 private:
     std::vector<MessageInfo*> _history;
     std::vector<MessageInfo*> _queue;

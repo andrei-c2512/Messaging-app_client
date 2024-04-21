@@ -39,6 +39,12 @@ void ChatView::setChatInfo(const ChatInfo& info)
     connect(pInfo, &ChatInfo::nameChanged, this, [=](const QString& str) {
         pName->setText(str);
     });
+    connect(pInfo, &ChatInfo::memberRemoved, this, [=](int id) {
+
+    });
+    connect(pInfo, &ChatInfo::removed, this, [=]() {
+        emit chatDeleted();
+    });
     const MessageInfo& back = info.back();
     pName->setText(info.name());
     QString shownMessage = back.name() + ':';

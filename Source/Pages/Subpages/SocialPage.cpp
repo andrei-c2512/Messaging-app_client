@@ -175,6 +175,12 @@ SocialPage::SocialPage(QWidget* parent ,ServerInfoProcessor& pInfoProcessor0 , C
     });
     pList->setContactList(*_currentList , serverInfoProcessor , chatPage, stackedWidget , SearchType::FriendList, pSearchBar->document()->isEmpty());
 }
+
+void SocialPage::updateLists()
+{
+    pList->setContactList(*_currentList ,serverInfoProcessor, chatPage, stackedWidget, _searchType, pSearchBar->document()->isEmpty());
+}
+
 void SocialPage::setSearchType(SearchType type)
 {
     _searchType = std::move(type);

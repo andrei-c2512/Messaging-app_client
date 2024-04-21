@@ -66,8 +66,10 @@ void GroupMemberOptions::setupUi(Features flags)
 		pMenu->addAction(pRemoveFromGroup);
 	}
 	setMenu(pMenu);
-	lastFeatures = flags;
+	_lastFeatures = flags;
 }
+
+GroupMemberOptions::Features GroupMemberOptions::lastFeatures() const { return _lastFeatures; }
 
 void GroupMemberOptions::setFlags(Features flags)
 {
@@ -77,7 +79,7 @@ void GroupMemberOptions::setFlags(Features flags)
 	pMenu->removeAction(pFriendAction);
 	pFriendAction->deleteLater();
 
-	if (lastFeatures & GroupMemberOptions::Features::YouAreAdmin)
+	if (_lastFeatures & GroupMemberOptions::Features::YouAreAdmin)
 	{
 		pMenu->removeAction(pMute);
 		pMenu->removeAction(pRemoveFromGroup);
@@ -90,13 +92,13 @@ void GroupMemberOptions::setFlags(Features flags)
 	if (flags & GroupMemberOptions::Features::Friend)
 	{
 		pFriendAction = new QAction;
-		pFriendAction->setText("Add friend");
+		pFriendAction->setText("Unfriend");
 		pFriendAction->setFont(menuFont);
 	}
 	else
 	{
 		pFriendAction = new QAction;
-		pFriendAction->setText("Unfriend");
+		pFriendAction->setText("Add friend");
 		pFriendAction->setFont(menuFont);
 	}
 	pMenu->addAction(pFriendAction);
@@ -115,7 +117,7 @@ void GroupMemberOptions::setFlags(Features flags)
 		pMenu->addAction(pRemoveFromGroup);
 	}
 
-	lastFeatures = flags;
+	_lastFeatures = flags;
 }
 
 ContactView_MembersSection::ContactView_MembersSection(QWidget* parent) : ContactView(parent)
@@ -134,8 +136,65 @@ void ContactView_MembersSection::attatchOptions(ServerInfoProcessor& processor, 
 	{
 		pOptions = new GroupMemberOptions(nullptr, ButtonStyleRepository::moreOptionsButton(), flags);
 		pLayout->addWidget(pOptions);
+		connectOptionsInit(processor , page  , flags);
 	}
 	else
+	{
 		pOptions->setFlags(flags);
+		connectFluctuatingOptions(processor, page, flags);
+	}
 	pLayout->addWidget(pOptions);
+}
+void ContactView_MembersSection::connectFluctuatingOptions(ServerInfoProcessor& processor, Chat& page, GroupMemberOptions::Features flags)
+{
+	auto lastFeatures = pOptions->lastFeatures();
+	pOptions->pFriendAction->disconnect();
+	if (flags & GroupMemberOptions::Features::Friend)
+	{
+		connect(pOptions->pFriendAction, &QAction::triggered, this, [=, &processor] {
+			processor.removeFriend(pInfo->id());
+		});
+	}
+	else
+	{
+		connect(pOptions->pFriendAction, &QAction::triggered, this, [=, &processor] {
+			processor.sendFriendRequest(pInfo->id());
+		});
+	}
+	if (flags & GroupMemberOptions::Features::YouAreAdmin)
+	{
+		qDebug() << connect(pOptions->pRemoveFromGroup, &QAction::triggered, this, [=, &processor, &page]() {
+			processor.removeFromGroup(page.chatId(), pInfo->id() );
+			});
+	}
+
+}
+
+void ContactView_MembersSection::connectOptionsInit(ServerInfoProcessor& processor, Chat& page, GroupMemberOptions::Features flags)
+{
+	connect(pOptions->pMessage, &QAction::triggered, this, [=, &page, &processor]() {
+		ChatInfo* chat = processor.privateChatById(pInfo->id());
+		if (chat == nullptr)
+			processor.createPrivateChatWithFriend(pInfo->id());
+		else
+			page.setChat(chat->id());
+		
+		emit switchToPrivateChat(pInfo->id());
+	});
+	connect(pOptions->pBlock, &QAction::triggered, this, [=, &processor] {
+		processor.blockUser(pInfo->id());
+	});
+	connect(pOptions->pFriendAction, &QAction::triggered, this, [=, &processor] {
+		if (flags & GroupMemberOptions::Features::Friend)
+			processor.removeFriend(pInfo->id());
+		else
+			processor.sendFriendRequest(pInfo->id());
+	});
+
+	if (flags & GroupMemberOptions::Features::YouAreAdmin)
+	{
+		qDebug() << connect(pOptions->pRemoveFromGroup, &QAction::triggered, this, [=, &processor, &page]() {
+			processor.removeFromGroup(page.chatId(), pInfo->id());
+		});
+	}
 }

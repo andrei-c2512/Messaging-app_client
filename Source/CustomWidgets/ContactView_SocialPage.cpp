@@ -248,13 +248,13 @@ QWidget* ContactView_SocialPage::friendOptions(ServerInfoProcessor& processor, C
 
     connect(&messageBtn, &CustomButton::clicked, this, [=, &processor, &page, &widget]() {
         ChatInfo* chat = processor.privateChatById(pInfo->id());
-    if (chat == nullptr)
-        processor.createPrivateChatWithFriend(pInfo->id());
-    else
-    {
-        page.setChat(chat->id());
-        widget.setCurrentWidget(&page);
-    }
+        if (chat == nullptr)
+            processor.createPrivateChatWithFriend(pInfo->id());
+        else
+        {
+            page.setChat(chat->id());
+            widget.setCurrentWidget(&page);
+        }
         });
 
     connect(&w->removeAction(), &QAction::triggered, this, [=, &processor]() {

@@ -68,6 +68,7 @@ static const QString chat_privateSep = "\"" + chatPrefix + "Private\":";
 static const QString chat_isSenderSep = "\"" + chatPrefix + "isSender\":";
 static const QString chat_adminIdSep = "\"" + chatPrefix + "Admin\":";
 static const QString chat_readOnlyListSep = "\"" + chatPrefix + "ReadOnlyList\":";
+static const QString chat_removedSep = "\"" + chatPrefix + "Removed\":";
 
 //for user info
 static const QString userPrefix = "user";
@@ -90,7 +91,8 @@ public:
         GetInfoForUsers,
         UnblockUser,
         CreateGroupChat,
-        UpdateChatName
+        UpdateChatName,
+        RemoveFromGroup
     };
     enum class InfoFromServer {
         SignedIn,  // will inform the user that he has succesfully signed in
@@ -107,7 +109,8 @@ public:
         InfoOfUsers,
         UserUnblocked,
         UserUnblockedYou,
-        NewChatName
+        NewChatName,
+        GroupMemberRemoved
     };
 public:
     ServerInfoProcessor(QObject* object = nullptr);
@@ -128,6 +131,8 @@ public slots:
     void blockUser(int id);
     void unblockUser(int id);
     void updateChatName(int chatId, QString newName);
+    void removeFromGroup(int chatId, int userId);
+    void leaveFromGroup(int chatId);
     void setName(QString str) override;
     void setPassword(QString pas) override;
     void setEmail(QString email) override;
@@ -176,6 +181,7 @@ private:
     int processUserUnblocked(const QString& str, int start);
     int processUserUnblockedYou(const QString& str, int start);
     int processNewChatName(const QString& str, int start);
+    int processGroupMemberRemoval(const QString& str, int start);
 
     static std::vector<int> extractIntsFromArr(const QString& str);
     void requestDataOfUnknownUsers();

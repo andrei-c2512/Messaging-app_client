@@ -27,7 +27,7 @@ ServerInfoProcessor::ServerInfoProcessor(QObject* object)
     connect(connectTimer , &QTimer::timeout , this , &ServerInfoProcessor::attemptConnection);
 }
 
-void ServerInfoProcessor::attemptConnection(){ _socket->connectToHost(QHostAddress::LocalHost , 1084);}
+void ServerInfoProcessor::attemptConnection(){ _socket->connectToHost(QHostAddress::LocalHost , 19704);}
 
 void ServerInfoProcessor::setName(QString str) { _name = std::move(str); loggedIn = false;}
 void ServerInfoProcessor::setEmail(QString str) { _email = std::move(str);  loggedIn = false;}
@@ -124,6 +124,15 @@ void ServerInfoProcessor::unblockUser(int id)
     _socket->flush();
 }
 
+void ServerInfoProcessor::removeFromGroup(int chatId, int userId)
+{
+    QString str = QString::number((int)RequestToServer::RemoveFromGroup) + '(' + QString::number(chatId) + ',' + 
+        QString::number(userId) + ',' + "true" + ')';
+
+    _socket->write(str.toUtf8());
+    _socket->flush();
+}
+
 void ServerInfoProcessor::getInfoForUsers(std::vector<int> list)
 {
     //CmdNum(id1 , id2 , .... , idn , userId)
@@ -140,6 +149,15 @@ void ServerInfoProcessor::updateChatName(int chatId, QString newName)
 {
     QString str = QString::number((int)RequestToServer::UpdateChatName) + " (" +
         QString::number(chatId) + " ," + newName.replace(',', "\,").replace('(', "\(").replace(')', "\)") + " )";
+
+    _socket->write(str.toUtf8());
+    _socket->flush();
+}
+
+void ServerInfoProcessor::leaveFromGroup(int chatId)
+{
+    QString str = QString::number((int)RequestToServer::RemoveFromGroup) + '(' + QString::number(chatId) + ',' +
+        QString::number(_id) + ',' + "false" + ')';
 
     _socket->write(str.toUtf8());
     _socket->flush();
@@ -269,6 +287,9 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
             case InfoFromServer::NewChatName:
                 end = processNewChatName(message, start);
                 break;
+            case InfoFromServer::GroupMemberRemoved:
+                end = processGroupMemberRemoval(message, start);
+                break;
             default:
                 qDebug() << "Received unkown message";
                 break;
@@ -311,7 +332,7 @@ int ServerInfoProcessor::processUserUnblocked(const QString& str, int start)
         moveUserToUnknownList(info);
         info->removeFlags(ContactInfo::Status::IsBlocked);
 
-        //emit info->removed();
+        emit info->removed(info->id());
         emit info->gotBlocked(false);
     }
 
@@ -328,10 +349,27 @@ int ServerInfoProcessor::processUserUnblockedYou(const QString& str, int start)
         moveUserToUnknownList(info);
         info->removeFlags(ContactInfo::Status::HasBlockedYou);
 
+        emit info->removed(info->id());
         emit info->blockedYou(false);
     }
 
     return str.indexOf(commandEnd, idPos) + commandEnd.length();
+}
+
+int ServerInfoProcessor::processGroupMemberRemoval(const QString& str, int start)
+{
+    int chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
+    int contactIdPos = str.indexOf(contact_idSep, chatIdPos) + contact_idSep.length();
+    int chatRemovalStatusPos = str.indexOf(chat_removedSep, contactIdPos) + chat_removedSep.length();
+
+    int chatId = str.mid(chatIdPos + 1, str.indexOf('"', chatIdPos + 1) - chatIdPos - 1).toInt();
+    int contactId = str.mid(contactIdPos + 1, str.indexOf('"', contactIdPos + 1) - contactIdPos - 1).toInt();
+    bool removed = str[chatRemovalStatusPos + 1] == 't';
+
+    ChatInfo* info = chatById(chatId);
+    info->removeMember(contactId , _id , removed);
+
+    return str.indexOf(commandEnd, contactId) + commandEnd.length();
 }
 
 int ServerInfoProcessor::processListOfStrangers(const QString& str, int start)

@@ -45,10 +45,12 @@ void ContactView::setContactInfo(ContactInfo& info)
 {
     pInfo = &info;
     pName->setText(pInfo->name());
-    if(pInfo->name().isEmpty() == false)
+    if (pInfo->name().isEmpty() == false)
+    {
         connect(pInfo, &ContactInfo::removed, this, [=](int id) {
             emit remove(id);
         });
+    }
 }
 
 void ContactView::setContactInfo(UserInfo& info)

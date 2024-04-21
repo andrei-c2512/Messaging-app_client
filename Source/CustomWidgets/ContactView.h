@@ -32,6 +32,7 @@ public:
     const ContactInfo* contactInfo() const;
 signals:
     void remove(int id);
+    void moved(int id);
 protected:
     const ContactInfo* pInfo;
     QHBoxLayout* pLayout;

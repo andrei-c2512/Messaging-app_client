@@ -20,6 +20,9 @@ static std::unique_ptr<QPixmap> _pfpPixmap;
 QSize crownImageSize = { 32 , 32 };
 static std::unique_ptr<QPixmap> _crownPixmap;
 
+static std::unique_ptr<QPixmap> _leavePixmap;
+static std::unique_ptr<QPixmap> _plusPixmap;
+
 void StyleRepository::initializeVariables()
 {
     _removePixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/RemoveIcon.png"), QColor(215, 38, 61))));
@@ -28,6 +31,8 @@ void StyleRepository::initializeVariables()
     _pfpPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/defaultPfpIcon.jpg").scaled(pfpImageSize), "white")));
     _crownPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/CrownIcon.png").scaled(crownImageSize), QColor("yellow"))));
     _messagePixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/MessageIcon.png"), QColor("white"))));
+    _leavePixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/LeaveIcon.png"), QColor(239, 35, 60))));
+    _plusPixmap = std::make_unique<QPixmap>(QPixmap::fromImage(ImagePainter::paintImage(QPixmap(":/Images/Images/Icons/PlusIcon.png"), QColor("white"))));
 }
 
 /*Base colors beggin */
@@ -67,6 +72,10 @@ QPixmap StyleRepository::Base::crownPixmap() { return *_crownPixmap; }
 
 /*Base colors end */
 
+/* Tool bar*/
+
+QPixmap StyleRepository::ToolBar::addPixmap() { return *_plusPixmap; }
+QPixmap StyleRepository::ToolBar::leavePixmap() { return *_leavePixmap; }
 /* QMenu related */
 
 QString StyleRepository::MenuStyle::qMenuStyleSheet()

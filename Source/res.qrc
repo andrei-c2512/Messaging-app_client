@@ -42,6 +42,7 @@
         <file>Images/Gifs/IhaveNoEnemies.gif</file>
         <file>Images/Icons/PlusIcon.png</file>
         <file>Images/Icons/CrownIcon.png</file>
+        <file>Images/Icons/LeaveIcon.png</file>
     </qresource>
     <qresource prefix="/Special"/>
 </RCC>

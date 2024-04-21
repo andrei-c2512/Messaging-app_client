@@ -45,6 +45,10 @@ namespace StyleRepository{
         QPixmap messagePixmap();
         QFont menuFont();
     }
+    namespace ToolBar {
+        QPixmap leavePixmap();
+        QPixmap addPixmap();
+    }
     namespace AddButton{
     QColor backgroundColor();
     QColor borderColor();

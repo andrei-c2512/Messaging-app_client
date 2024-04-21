@@ -145,6 +145,26 @@ void ChatInfo::addMessageFromDatabase( QString name , QString message, QString t
     }
 }
 
+void ChatInfo::removeMember(int id , int userId, bool forcefullyRemoved)
+{
+    for (int i = 0; i < _members.size(); i++)
+    {
+        if (_members[i] == id)
+        {
+            if (id == userId)
+            {
+                emit removed(forcefullyRemoved);
+                deleteLater();
+            }
+            else
+            {
+                _members.erase(_members.begin() + i);
+                emit memberRemoved(id);
+            }
+        }
+    }
+}
+
 void ChatInfo::connectSlotsForPrivateChats(ContactInfo* info)
 {
     connect(info, &ContactInfo::gotBlocked, this, [=](bool blocked) {
@@ -440,7 +460,12 @@ void UserInfo::moveUserToBlocked(ContactInfo* info)
             return info->id() == info0->id();
             });
     }
-
+    else
+    {
+        contact = Tools::takeItem<ContactInfo*>(_strangerList, [info](ContactInfo* info0) {
+            return info->id() == info0->id();
+            });
+    }
     if (contact)
     {
         Tools::insertIntoArrayWhileKeepingOrder(_blockedList, contact);

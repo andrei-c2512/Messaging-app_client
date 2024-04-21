@@ -47,11 +47,14 @@ public:
     enum class Mode {
         Invalid,
         YouAreBlocked,
-        YouBlocked
+        YouBlocked,
+        ForcefullyRemoved,
+        Left
     };
 public:
     BlockUI(QWidget* parent = nullptr);
-    void setMode(Mode mode, ContactInfo* info, ServerInfoProcessor& processor);
+    void setBlockMode(Mode mode, ContactInfo* info, ServerInfoProcessor& processor);
+    void setRemovedMode(Mode mode);
 private:
     void setupUi();
 private:
@@ -84,6 +87,8 @@ public:
     void setChat(ChatInfo& pInfo);
     void setChat(int id);
     TitleTextEdit& groupNameEdit();
+    int chatId() const;
+    void onGettingRemoved(bool forcefully);
 public slots:
     void createRoom();
     void onGettingBlocked(bool blocked);
@@ -94,7 +99,9 @@ private:
     void signalsAndSlots();
 private:
     QVBoxLayout* pMainLayout;
+
     TitleTextEdit* pGroupName;
+
     ChatHistory* pChat;
     ChatInfo* lastPrivateChat;
     ChatInfo* lastChat;

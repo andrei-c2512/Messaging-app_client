@@ -47,6 +47,7 @@ class SocialPage : public Page{
 public:
     SocialPage(QWidget* parent , ServerInfoProcessor& pInfoProcessor0 , ChatPage& chatPage0 , QStackedWidget& stackedWidget);
     void setSearchType(SearchType type);
+    void updateLists();
 public slots:
     void search(const QString& str);
 private:

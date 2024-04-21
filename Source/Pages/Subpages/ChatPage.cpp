@@ -16,7 +16,6 @@ void MembersSection::setContactList(std::vector<int> contactIdList, ServerInfoPr
     if (dif < 0)
     {
         dif = -dif;
-        // + 1 because we add the app user as well
         _viewList.resize(oldSize + dif);
         auto e = _viewList.end();
         for (auto b = _viewList.begin() + oldSize; b != e; ++b)
@@ -34,7 +33,9 @@ void MembersSection::setContactList(std::vector<int> contactIdList, ServerInfoPr
                     }
                 }
                 });
-
+            connect(*b, &ContactView_MembersSection::switchToPrivateChat, this, [=, &processor, &page](int id) {
+                setContactList({ id }, processor, page, adminId);
+                });
             pLayout->insertWidget(pLayout->count() - 1, *b);
         }
 
@@ -69,9 +70,25 @@ void MembersSection::setContactList(std::vector<int> contactIdList, ServerInfoPr
     }
 
     _contactInfoList = contactList;
-    pMembersLabel->setText("Members - " + QString::number(contactIdList.size() - 1));
+    pMembersLabel->setText("Members - " + QString::number(contactIdList.size() + 1));
 }
 
+void MembersSection::removeContact(int id)
+{
+    for (int i = 0; i < _viewList.size(); i++)
+    {
+        if (_viewList[i]->contactInfo()->id() == id)
+        {
+            _viewList[i]->deleteLater();
+            _viewList.erase(_viewList.begin() + i);
+            _contactInfoList.erase(_contactInfoList.begin() + i);
+
+            pMembersLabel->setText("Members - " + QString::number(_contactInfoList.size() + 1));
+            break;
+        }
+    }
+}
+void MembersSection::removeUserView() { pUserView->setVisible(false); }
 
 void MembersSection::setupUi()
 {
@@ -91,7 +108,6 @@ void MembersSection::setupUi()
     pLayout->addWidget(pUserView);
     pLayout->addStretch(1);
 
-
     setWidget(pWidget);
 }
 
@@ -109,7 +125,7 @@ void MembersSection::setAdmin(int adminId)
 ChatPage::ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor) : Page(parent , ServerInfoProcessor)
 {
     setupUi();
-
+    pInfo = nullptr;
     connect(&ServerInfoProcessor, &ServerInfoProcessor::unknownListReceived, this, [= , &ServerInfoProcessor]() {
         setChat(ServerInfoProcessor.firstChat());
         });
@@ -117,20 +133,67 @@ ChatPage::ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor) :
 
 void ChatPage::setupUi()
 {
+    pMembersSection = new MembersSection(nullptr, serverInfoProcessor);
+
+    pAddButton = new QAction;
+    pAddButton->setIcon(StyleRepository::ToolBar::addPixmap());
+    pLeaveButton = new QAction;
+    pLeaveButton->setIcon(StyleRepository::ToolBar::leavePixmap());
+    
+    connect(pLeaveButton, &QAction::triggered, this, [=]() {
+        serverInfoProcessor.leaveFromGroup(pInfo->id());
+    });
+
+    QWidget* spacer = new QWidget;
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    pToolBar = new QToolBar;
+    pToolBar->addAction(pAddButton);
+    pToolBar->addWidget(spacer);
+    pToolBar->addAction(pLeaveButton);
+
+    pVerticalLayout = new QVBoxLayout;
+    pVerticalLayout->addWidget(pToolBar);
+    pVerticalLayout->addWidget(pMembersSection);
+
     pMainLayout = new QHBoxLayout(this);
     pChat = new Chat(nullptr , serverInfoProcessor);
-    pMembersSection = new MembersSection(nullptr , serverInfoProcessor);
 
     pMainLayout->addWidget(pChat, 4);
-    pMainLayout->addWidget(pMembersSection, 1);
+    pMainLayout->addLayout(pVerticalLayout, 1);
 }
+void ChatPage::onBeingRemoved(bool forcefullyremoved)
+{
+    pChat->onGettingRemoved(forcefullyremoved);
+    pMembersSection->removeUserView();
+}
+
+void ChatPage::onMemberRemoval(int id)
+{
+    pMembersSection->removeContact(id);
+}
+
 void ChatPage::setChat(ChatInfo& info)
 {
+    if (pInfo)
+    {
+        disconnect(pInfo, &ChatInfo::memberRemoved, this, &ChatPage::onMemberRemoval);
+        disconnect(pInfo, &ChatInfo::removed, this, &ChatPage::onBeingRemoved);
+    }
+
+    pInfo = &info;
+    connect(pInfo, &ChatInfo::memberRemoved, this, &ChatPage::onMemberRemoval);
+    connect(pInfo, &ChatInfo::removed, this, &ChatPage::onBeingRemoved);
+
     if (info.isPrivate())
+    {
         pMembersSection->setVisible(false);
+        pToolBar->setVisible(false);
+    }
     else
     {
         pMembersSection->setVisible(true);
+        pToolBar->setVisible(true);
         pMembersSection->setContactList(info.members(), serverInfoProcessor, *pChat, info.adminId());
     }
     pChat->setChat(info);
@@ -139,6 +202,5 @@ void ChatPage::setChat(ChatInfo& info)
 
 void ChatPage::setChat(int id)
 {
-    ChatInfo& info = serverInfoProcessor.getChatById(id);
-    setChat(info);
+    setChat(serverInfoProcessor.getChatById(id));
 }

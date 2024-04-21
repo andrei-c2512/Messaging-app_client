@@ -126,7 +126,7 @@ BlockUI::BlockUI(QWidget* parent) : QWidget(parent)
 {
     setupUi();
 }
-void BlockUI::setMode(Mode mode, ContactInfo* info, ServerInfoProcessor& processor)
+void BlockUI::setBlockMode(Mode mode, ContactInfo* info, ServerInfoProcessor& processor)
 {
     pUnblockButton->disconnect();
     if (mode == Mode::YouAreBlocked)
@@ -143,6 +143,21 @@ void BlockUI::setMode(Mode mode, ContactInfo* info, ServerInfoProcessor& process
             });
     }
 }
+
+void BlockUI::setRemovedMode(Mode mode)
+{
+    if (mode == Mode::ForcefullyRemoved)
+    {
+        pLabel->setText("You have been removed from the group");
+        pUnblockButton->setVisible(false);
+    }
+    else if (mode == Mode::Left)
+    {
+        pLabel->setText("You have left the group");
+        pUnblockButton->setVisible(false);
+    }
+}
+
 void BlockUI::setupUi()
 {
     pLabel = new QLabel;
@@ -251,7 +266,7 @@ void Chat::setChat(ChatInfo& info)
 
         if (mode != BlockUI::Mode::Invalid)
         {
-            pBlockUI->setMode(mode, contactInfo, processor);
+            pBlockUI->setBlockMode(mode, contactInfo, processor);
             pStackedWidget->setCurrentWidget(pBlockUI);
         }
         else
@@ -285,7 +300,7 @@ void Chat::onGettingBlocked(bool blocked)
 {
     if (blocked)
     {
-        pBlockUI->setMode(BlockUI::Mode::YouAreBlocked, lastPrivateChatUser, processor);
+        pBlockUI->setBlockMode(BlockUI::Mode::YouAreBlocked, lastPrivateChatUser, processor);
         pStackedWidget->setCurrentWidget(pBlockUI);
     }
     else
@@ -295,11 +310,18 @@ void Chat::onBlocking(bool blocked)
 {
     if (blocked)
     {
-        pBlockUI->setMode(BlockUI::Mode::YouBlocked, lastPrivateChatUser, processor);
+        pBlockUI->setBlockMode(BlockUI::Mode::YouBlocked, lastPrivateChatUser, processor);
         pStackedWidget->setCurrentWidget(pBlockUI);
     }
     else
         pStackedWidget->setCurrentWidget(pMessageBar);
+}
+
+void Chat::onGettingRemoved(bool forcefully)
+{
+    BlockUI::Mode mode = (forcefully) ? BlockUI::Mode::ForcefullyRemoved : BlockUI::Mode::Left;
+    pBlockUI->setRemovedMode(mode);
+    pStackedWidget->setCurrentWidget(pBlockUI);
 }
 
 void Chat::setChat(int id)
@@ -312,3 +334,4 @@ void Chat::createRoom()
 {
 }
 
+int Chat::chatId() const { return lastChat->id(); }

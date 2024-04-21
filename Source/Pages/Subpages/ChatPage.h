@@ -15,7 +15,7 @@
 #include <QStackedWidget>
 #include "CustomStyledWidgets/CustomButton.h"
 #include "CustomWidgets/ContactView_MembersSection.h"
-
+#include <QToolBar>
 
 
 class MembersSection : public QScrollArea {
@@ -25,8 +25,12 @@ public:
     MembersSection(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor);
     void setContactList(std::vector<int> contactIdList , ServerInfoProcessor& processor, Chat& page, int adminId);
     void setAdmin(int admin);
+    void removeContact(int id);
+    void removeUserView();
 private:
     void setupUi();
+signals:
+    void switchToPrivateChat(int contactId);
 private:
     QWidget* pWidget;
     ContactView_MembersSection* pUserView;
@@ -45,13 +49,21 @@ public:
     ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor);
     void setChat(ChatInfo& pInfo);
     void setChat(int id);
+public slots:
+    void onMemberRemoval(int id);
+    void onBeingRemoved(bool forcefullyremoved);
 private:
     void setupUi();
 private:
     QHBoxLayout* pMainLayout;
+    QVBoxLayout* pVerticalLayout;
+    QToolBar* pToolBar;
+    QAction* pAddButton;
+    QAction* pLeaveButton;
     MembersSection* pMembersSection;
     Chat* pChat;
 
+    ChatInfo* pInfo;
     static constexpr int characterLimit = 250;
 };
 
