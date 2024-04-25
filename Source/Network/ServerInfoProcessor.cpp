@@ -5,6 +5,7 @@ ServerInfoProcessor::ServerInfoProcessor(QObject* object)
     :UserInfo(object)
 {
     loggedIn = false;
+    userInfoReceived = false;
     _socket = new QTcpSocket(this);
     connect(_socket , &QTcpSocket::readyRead , this , &ServerInfoProcessor::onReadyRead);
     connect(_socket , &QTcpSocket::connected , this , [=](){
@@ -163,6 +164,19 @@ void ServerInfoProcessor::leaveFromGroup(int chatId)
     _socket->flush();
 }
 
+void ServerInfoProcessor::addPeopleToGroup(int chatId , std::vector<int> idList)
+{
+    QString str = QString::number((int)RequestToServer::AddPeopleToTheChat) + '(';
+
+    for (int id : idList)
+        str += QString::number(id) + ',';
+
+    str += QString::number(chatId) + ')';
+    _socket->write(str.toUtf8());
+    _socket->flush();
+} 
+
+
 void ServerInfoProcessor::onReadyRead()
 {
     QString message = _socket->readAll();
@@ -263,6 +277,7 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
                 break;
             case InfoFromServer::NewChat:
                 end = processNewChat(message, start);
+                requestDataOfWaitingUsers();
                 break;
             case InfoFromServer::FriendRemoved:
                 end = processFriendRemoval(message, start);
@@ -276,6 +291,11 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
             case InfoFromServer::InfoOfUsers:
                 end = processListOfStrangers(message, start);
                 transformChats();
+                if (userInfoReceived == false)
+                {
+                    userInfoReceived = true;
+                    emit allUserInfoReceived();
+                }
                 emit unknownListReceived();
                 break;
             case InfoFromServer::UserUnblocked:
@@ -289,6 +309,16 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
                 break;
             case InfoFromServer::GroupMemberRemoved:
                 end = processGroupMemberRemoval(message, start);
+                break;
+            case InfoFromServer::GroupMemberAdded:
+                end = processNewGroupMembers(message, start);
+                requestDataOfWaitingUsers();
+                break;
+            case InfoFromServer::NecessaryContacts:
+                end = processNecessaryContacts(message, start);
+                break;
+            case InfoFromServer::NewAdmin:
+                end = processNewAdmin(message, start);
                 break;
             default:
                 qDebug() << "Received unkown message";
@@ -304,6 +334,27 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
         qDebug() << e.what();
     }
     return end;
+}
+
+int ServerInfoProcessor::processNewGroupMembers(const QString& str, int start)
+{
+    int chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
+    int idListPos = str.indexOf(chat_newMembersSep, chatIdPos) + chat_newMembersSep.length();
+
+    int chatId = str.mid(chatIdPos + 1, str.indexOf('"', chatIdPos + 1) - chatIdPos - 1).toInt();
+    std::vector<int> list = Tools::extractIntsFromArr(str.mid(idListPos + 1, str.indexOf('"', idListPos + 1) - idListPos - 1));
+
+    ChatInfo* chatInfo = chatById(chatId);
+    for (int id : list)
+    {
+        ContactInfo* contactInfo = findUser(id);
+        if (contactInfo == nullptr)
+            _awaitingContactInfoList.emplace_back(std::make_pair(id , chatId));
+        else
+            chatInfo->addMember(id);
+    }
+
+    return str.indexOf(commandEnd, idListPos) + commandEnd.length();
 }
 
 int ServerInfoProcessor::processNewChatName(const QString& str, int start)
@@ -374,6 +425,29 @@ int ServerInfoProcessor::processGroupMemberRemoval(const QString& str, int start
 
 int ServerInfoProcessor::processListOfStrangers(const QString& str, int start)
 {
+    std::function<void(ContactInfo*)> verify;
+    if (_awaitingContactInfoList.size())
+    {
+        verify = [=](ContactInfo* info) {
+            for (int i = 0; i < _awaitingContactInfoList.size(); i++)
+            {
+                if (info->id() == _awaitingContactInfoList[i].first)
+                {
+                    ChatInfo* chat = chatById(_awaitingContactInfoList[i].second);
+                    chat->addMember(info->id());
+                    _awaitingContactInfoList.erase(_awaitingContactInfoList.begin() + i);
+                    break;
+                }
+            }
+        };
+    }
+    else
+    {
+        verify = [](ContactInfo* info) {
+            Q_UNUSED(info)
+        };
+    }
+
     //this was before adding the flag macros
     std::vector<ContactInfo*> vec;
     int idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
@@ -409,6 +483,8 @@ int ServerInfoProcessor::processListOfStrangers(const QString& str, int start)
         vec.emplace_back(contact);
         start = str.indexOf(contact_idSep, lastSeenPos);
         UserInfo::addToStrangerList(contact);
+
+        verify(contact);
     }
 
     //I don't use a custom add function because the order of the received contact info is the desired type
@@ -465,13 +541,24 @@ int ServerInfoProcessor::processNewChat(const QString& str, int start)
     int isSenderPos = str.indexOf(chat_isSenderSep, privatePos) + chat_isSenderSep.length();
 
     ChatInfo* info = new ChatInfo(this);
-    info->setId(str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt());
+    int chatId = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
+    info->setId(chatId);
     info->setName(str.mid(namePos + 1, str.indexOf('"', namePos + 1) - namePos - 1));
     info->setMessageHistory(extractHistoryFromChat(str, historyPos));
     info->setMembers(str.mid(memberlistPos + 1, str.indexOf('"', memberlistPos + 1) - memberlistPos - 1));
     info->setType(str[privatePos + 1] == 't');
     info->setAdminId(str.mid(adminPos + 1, str.indexOf('"', adminPos + 1) - adminPos - 1).toInt());
-    info->setReadOnlyMembers(Tools::extractIntsFromArr(str, readOnlyListPos));
+
+    auto list = Tools::extractIntsFromArr(str, readOnlyListPos);
+    for (int id : list)
+    {
+        ContactInfo* contact = findUser(id);
+        if (contact == nullptr)
+        {
+            _awaitingContactInfoList.emplace_back(std::make_pair(id, chatId));
+        }
+    }
+    info->setReadOnlyMembers(list);
 
     bool isSender = str[isSenderPos + 1] == 't';
 
@@ -480,10 +567,13 @@ int ServerInfoProcessor::processNewChat(const QString& str, int start)
 
     connect(info, SIGNAL(newMessageInQueue(const MessageInfo&, int)), this, SLOT(addMessage(const MessageInfo&, int)));
 
-    if (isSender)
-        emit createdNewChat(info->id());
-    else
-        emit addedToNewChat(info->id());
+    if (_awaitingContactInfoList.empty() == false)
+    {
+        if (isSender)
+            emit createdNewChat(info->id());
+        else
+            emit addedToNewChat(info->id());
+    }
 
     return str.indexOf(commandEnd, isSenderPos) + commandEnd.length();
 }
@@ -557,13 +647,13 @@ int ServerInfoProcessor::processNewFriendRequest(const QString& str , int start)
         QString aux = str.mid(idPos + 1 , str.indexOf('"' , idPos + 1) - idPos - 1);
         contact->setId(aux.toInt());
 
-        char flags = 0;
+        ContactInfo::ContactStatus flags = ContactInfo::Status::Null;
         if (str[hasRequestPos + 1] == 't')
-            flags = flags | (char)ContactInfo::Status::HasRequest;
+            flags = flags | ContactInfo::Status::HasRequest;
         if(str[isBlockedPos + 1] == 't')
-            flags = flags | (char)ContactInfo::Status::HasBlockedYou;
+            flags = flags | ContactInfo::Status::HasBlockedYou;
 
-        contact->setFlags((ContactInfo::Status)flags);
+        contact->setFlags(flags);
 
         UserInfo::addToRequestList(contact);
         start = str.indexOf(contact_idSep , lastSeenPos);
@@ -722,6 +812,64 @@ int ServerInfoProcessor::processContactInfo(const QString& str , int start)
         });
     return endPos + commandEnd.length();
 }
+
+int ServerInfoProcessor::processNecessaryContacts(const QString& str, int start)
+{
+    //beware , you did not intialize the friend id list
+    int end = str.indexOf(commandEnd, start) + commandEnd.length();
+    start = str.indexOf(contact_idSep, start) + contact_idSep.length();
+    int last = 0;
+    while (start < end && start != -1 && last <= start)
+    {
+        int idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
+        idPos = start;
+        namePos = str.indexOf(contact_nameSep, idPos) + contact_nameSep.length();
+        friendListPos = str.indexOf(contact_friendListSep, namePos) + contact_friendListSep.length();
+        onlinePos = str.indexOf(contact_onlineSep, friendListPos) + contact_onlineSep.length();
+        lastSeenPos = str.indexOf(contact_lastSeenSep, onlinePos) + contact_lastSeenSep.length();
+        isBlockedPos = str.indexOf(contact_isBlockedSep, lastSeenPos) + contact_isBlockedSep.length();
+        hasRequestPos = str.indexOf(contact_hasRequestSep, isBlockedPos) + contact_hasRequestSep.length();
+
+        // + 2 because - once to go to next pos '"' , and another to go to the non '"' pos
+        //because otherwise , it would return the pos of the first '"' which will make it read an empty string
+
+        int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
+        ContactInfo* test = findUser(id);
+        if (test != nullptr && id != _id) {
+            last = start;
+            start = str.indexOf(contact_idSep, lastSeenPos) + contact_idSep.length();
+            continue;
+        }
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        char flags = 0;
+        if (str[hasRequestPos + 1] == 't')
+            flags = flags | (char)ContactInfo::Status::HasRequest;
+        if (str[isBlockedPos + 1] == 't')
+            flags = flags | (char)ContactInfo::Status::HasBlockedYou;
+        if (str[onlinePos + 1] == 't')
+            flags = flags | (char)ContactInfo::Status::Online;
+
+        std::vector<int> friendIdList = Tools::extractIntsFromArr(str.mid(friendListPos + 1, str.indexOf('"', friendListPos + 1) - friendListPos - 1));
+        if (std::find(friendIdList.begin(), friendIdList.end(), _id) != friendIdList.end())
+            flags = flags | (char)ContactInfo::Status::Friend;
+
+        ContactInfo* contact = new ContactInfo(this, str.mid(namePos + 1, str.indexOf('"', namePos + 1) - namePos - 1),
+            ContactInfo::Status(flags),
+            str.mid(lastSeenPos + 1, str.indexOf('"', lastSeenPos + 1) - lastSeenPos - 1));
+
+        contact->setId(id);
+
+        UserInfo::addUserByFlag(contact);
+
+        last = start;
+        start = str.indexOf(contact_idSep, lastSeenPos) + contact_idSep.length();
+
+        qDebug() << "Needed id: " << id;
+    }
+    return end;
+}
+
 std::vector<ContactInfo*>  ServerInfoProcessor::processContactList(const QString& str , int start , int end)
 {
     //beware , you did not intialize the friend id list
@@ -767,6 +915,21 @@ int ServerInfoProcessor::processNewFriendInfo(const QString& str , int start)
     UserInfo::addFriend(contact);
     return str.indexOf(commandEnd , friendListPos) + commandEnd.length();
 }
+
+int ServerInfoProcessor::processNewAdmin(const QString& str, int start)
+{
+    int chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
+    int contactIdPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
+
+    int chatId = str.mid(chatIdPos + 1, str.indexOf('"', chatIdPos + 1) - chatIdPos - 1).toInt();
+    int contactId = str.mid(contactIdPos + 1, str.indexOf('"', contactIdPos + 1) - contactIdPos - 1).toInt();
+
+    ChatInfo* chatInfo = chatById(chatId);
+    chatInfo->setNewAdmin(contactId);
+
+    return str.indexOf(commandEnd, contactIdPos) + commandEnd.length();
+}
+
 
 std::vector<MessageInfo*> ServerInfoProcessor::extractHistoryFromChat(const QString& str , int start)
 {
@@ -884,6 +1047,16 @@ void ServerInfoProcessor::requestDataOfUnknownUsers()
         unknownUsersIdList.emplace_back(pair.first);
 
     getInfoForUsers(unknownUsersIdList);
+}
+void ServerInfoProcessor::requestDataOfWaitingUsers()
+{
+    if (_awaitingContactInfoList.size() == 0) return;
+
+    std::vector<int> list(_awaitingContactInfoList.size());
+    for (int i = 0; i < list.size(); i++)
+        list[i] = _awaitingContactInfoList[i].first;
+
+    getInfoForUsers(list);
 }
 
 const QTcpSocket& ServerInfoProcessor::socket() const { return *_socket;}

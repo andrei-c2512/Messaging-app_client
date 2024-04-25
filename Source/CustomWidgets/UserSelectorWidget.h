@@ -26,10 +26,18 @@ private:
 class UserSelectorWidget : public QMdiSubWindow {
     Q_OBJECT
 public:
+    enum class Role {
+        MakeGroupChat, AddToGroupChat
+    };
+public:
 	UserSelectorWidget(QWidget* parent , ServerInfoProcessor& processor);
+    void launch(QPoint point , std::vector<ContactInfo*> contactList);
     void launch(QPoint point);
     void launch();
+    void setRole(Role role);
+    void setChatId(int id);
     //on and off , like a switch
+    void flip(QPoint point, std::vector<ContactInfo*> contactList);
     void flip(QPoint point , bool visible);
     void flip(bool visible);
     void flip(QPoint point);
@@ -50,4 +58,7 @@ private:
     SearchBar* pSearchBar;
     CustomButton* pSearchButton;
     CustomButton* pDoneButton;
+
+    Role _role;
+    int _chatId;
 };

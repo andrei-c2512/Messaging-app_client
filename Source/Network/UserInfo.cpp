@@ -36,7 +36,7 @@ void MessageInfo::setName(QString str) { _name = std::move(str);}
 void MessageInfo::setText(QString text) { _text = std::move(text);}
 
 //for ChatInfo
-ChatInfo::ChatInfo(QObject* parent) : QObject(parent) {}
+ChatInfo::ChatInfo(QObject* parent) : QObject(parent) { _private = false; }
 void ChatInfo::setMessageHistory(std::vector<MessageInfo*> vec) { _history = vec;}
 void ChatInfo::setName(QString name) { _name = std::move(name); emit nameChanged(_name); }
 void ChatInfo::setNewName(QString name0)
@@ -50,11 +50,13 @@ void ChatInfo::setMembers(const QString& str) { _members = Tools::extractIntsFro
 void ChatInfo::setReadOnlyMembers(std::vector<int> members_id) { _readOnlyMembers = std::move(members_id); }
 void ChatInfo::setReadOnlyMembers(const QString& str) { _readOnlyMembers = Tools::extractIntsFromArr(str); }
 void ChatInfo::setAdminId(int id) { _adminId = id; }
-
+void ChatInfo::setNewAdmin(int id) {
+    _adminId = id;
+    emit newAdmin(id);
+}
 void ChatInfo::setId(int id) { _id = std::move(id);}
 void ChatInfo::setType(bool isPrivate) { _private = isPrivate; }
 
-void ChatInfo::addMember(int id) { _members.emplace_back(std::move(id));}
 void ChatInfo::addMessage(MessageInfo* mes) { _history.emplace_back(mes);}
 
 QString ChatInfo::name() const { return _name;}
@@ -164,6 +166,11 @@ void ChatInfo::removeMember(int id , int userId, bool forcefullyRemoved)
         }
     }
 }
+void ChatInfo::addMember(int id)
+{
+    _members.emplace_back(id);
+    emit newMember(id);
+}
 
 void ChatInfo::connectSlotsForPrivateChats(ContactInfo* info)
 {
@@ -211,6 +218,33 @@ ContactInfo::ContactStatus ContactInfo::flags() const { return _flags; }
 bool ContactInfo::operator<(const ContactInfo& info) { return _id < info._id; }
 bool ContactInfo::operator>(const ContactInfo& info) { return _id > info._id; }
 bool ContactInfo::operator==(const ContactInfo& info) { return _id == info._id; }
+
+std::vector<ContactInfo*> ContactInfo::subtractFromList(std::vector<ContactInfo*> list1, std::vector<ContactInfo*> list2)
+{
+    Tools::sort<ContactInfo*>(list1, [](ContactInfo* lhs, ContactInfo* rhs) {
+        return *lhs < *rhs;
+        });
+    Tools::sort<ContactInfo*>(list2, [](ContactInfo* lhs, ContactInfo* rhs) {
+        return *lhs < *rhs;
+        });
+
+
+    std::vector<ContactInfo*> newVec;
+    for (ContactInfo* c1 : list1)
+    {
+        bool subtracted = false;
+        for (ContactInfo* c2 : list2)
+        {
+            if (c1->id() == c2->id())
+                subtracted = true;
+        }
+        if (subtracted == false)
+            newVec.emplace_back(c1);
+    }
+
+
+    return newVec;
+}
 
 
 //for null info
@@ -291,6 +325,19 @@ void UserInfo::addToStrangerList(ContactInfo* c)
 {
     c->setParent(this);
     Tools::insertIntoArrayWhileKeepingOrder(_strangerList, c);
+}
+
+void UserInfo::addUserByFlag(ContactInfo* contact)
+{
+    auto flags = contact->flags();
+    if (flags & ContactInfo::Status::Friend)
+        addFriend(contact);
+    else if (flags & ContactInfo::Status::HasRequest)
+        addToRequestList(contact);
+    else if (flags & ContactInfo::Status::IsBlocked)
+        addToBlockedList(contact);
+    else
+        addToStrangerList(contact);
 }
 
 std::vector<ContactInfo*> UserInfo::findUsers(std::vector<int> list)
@@ -553,3 +600,5 @@ ChatInfo& UserInfo::firstChat() const {
     else
         return NullInfo::instance().nullChat();
 }
+
+bool UserInfo::chatListEmpty() const { return _chatList.size() == 0; }

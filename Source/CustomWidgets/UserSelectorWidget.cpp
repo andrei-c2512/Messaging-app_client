@@ -87,7 +87,16 @@ UserSelectorWidget::UserSelectorWidget(QWidget* parent, ServerInfoProcessor& pro
     setFocusPolicy(Qt::ClickFocus);
     setupUi();
     setObjectName("UserSelectorWidget");
+    _chatId = 0;
 }
+void UserSelectorWidget::launch(QPoint point, std::vector<ContactInfo*> contactList)
+{
+    setGeometry(QRect(point, size()));
+    pList->setContactList(contactList);
+    pList->resetViews();
+    setVisible(true);
+}
+
 void UserSelectorWidget::launch(QPoint point)
 {
     setGeometry(QRect(point, size()));
@@ -100,6 +109,8 @@ void UserSelectorWidget::launch()
     setVisible(true);
 }
 
+void UserSelectorWidget::setRole(Role role) { _role = role; }
+void UserSelectorWidget::setChatId(int id) { _chatId = id; }
 void UserSelectorWidget::search(const QString& str)
 {
     std::vector<std::pair<ContactInfo*, int>> _foundUsers;
@@ -133,8 +144,15 @@ void UserSelectorWidget::setupUi()
     pDoneButton->setText("Done");
     connect(pDoneButton, &CustomButton::clicked, this, [=]() {
         auto list = pList->checkedUsers();
-        if(list.size() > 1)
-            processor.createGroupChat(list);
+        if (list.size() > 1)
+        {
+            if (_role == UserSelectorWidget::Role::MakeGroupChat)
+                processor.createGroupChat(list);
+            else if (_role == UserSelectorWidget::Role::AddToGroupChat)
+                processor.addPeopleToGroup(_chatId , list);
+        }
+        else if(list.size() == 1 && _role == UserSelectorWidget::Role::AddToGroupChat)
+            processor.addPeopleToGroup(_chatId, list);
 
         setVisible(false);
     });
@@ -165,6 +183,14 @@ void UserSelectorWidget::setupUi()
 
 
     setWidget(pWidget);
+}
+
+void UserSelectorWidget::flip(QPoint point, std::vector<ContactInfo*> contactList)
+{
+    if (isVisible() == false)
+        launch(point , contactList);
+    else
+        setVisible(false);
 }
 
 void UserSelectorWidget::flip(QPoint point , bool visible)

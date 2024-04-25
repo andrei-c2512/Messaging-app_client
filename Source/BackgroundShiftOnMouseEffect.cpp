@@ -29,6 +29,8 @@ BackgroundShiftOnMouseEffect::BackgroundShiftOnMouseEffect(QWidget* parent , QPi
     _scaledBackgroundRect.setSize(_scaledBackgroundRect.size() * scale);
     scaleBackground();
 
+    qDebug() << "Background widget width: " << width();
+    qDebug() << "Background widget height: " << height();
     _current = QRect(QPoint(_scaledBackgroundRect.width() / 2 - width() / 2 , _scaledBackgroundRect.height() / 2 - height() / 2 ), size() );
     redrawTimer = new QTimer;
     redrawTimer->start(17);
@@ -273,6 +275,8 @@ QPointF BackgroundShiftOnMouseEffect::posToBackgroundPos(const QPointF& pos) con
 }
 void BackgroundShiftOnMouseEffect::resizeEvent(QResizeEvent* ev)
 {
+    qDebug() << "Background widget in resizeEvent width: " << width();
+    qDebug() << "Background widget in resizeEvent height: " << height();
     _current = QRect(QPoint(_scaledBackgroundRect.width() / 2 - width() / 2 , _scaledBackgroundRect.height() / 2 - height() / 2 ), size() );
     oldMousePos = QPoint(_scaledBackgroundRect.width() / 2 - width() / 2 , _scaledBackgroundRect.height() / 2 - height() / 2 );
     QWidget::resizeEvent(ev);

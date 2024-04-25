@@ -186,8 +186,9 @@ Chat::Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor) : QWidget(
     signalsAndSlots();
     lastPrivateChat = nullptr;
     lastPrivateChatUser = nullptr;
-    connect(&ServerInfoProcessor, &ServerInfoProcessor::unknownListReceived, this, [=, &ServerInfoProcessor]() {
-        setChat(ServerInfoProcessor.firstChat());
+    connect(&ServerInfoProcessor, &ServerInfoProcessor::allUserInfoReceived, this, [=, &ServerInfoProcessor]() {
+        if (ServerInfoProcessor.chatListEmpty() == false)
+            setChat(ServerInfoProcessor.firstChat());
         });
 
     lastChat = nullptr;
@@ -240,7 +241,7 @@ void Chat::setChat(ChatInfo& info)
 {
     if (lastChat)
         disconnect(lastChat, &ChatInfo::nameChanged, this, &Chat::updateName);
-    connect(lastChat, &ChatInfo::nameChanged, this, &Chat::updateName);
+    connect(&info, &ChatInfo::nameChanged, this, &Chat::updateName);
 
     if (info.isPrivate())
     {

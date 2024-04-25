@@ -12,7 +12,7 @@ MainPage::MainPage(QWidget* parent , ServerInfoProcessor& processor  , UserSelec
 void MainPage::setupUi(UserSelectorWidget& userSelectorWidget)
 {
     QMargins noMargins = QMargins(0 , 0 , 0 , 0);
-    pManager = new SubpageManager(nullptr , serverInfoProcessor);
+    pManager = new SubpageManager(nullptr , serverInfoProcessor , userSelectorWidget);
     pManager->setContentsMargins(noMargins);
     pFrame = new OptionSectionFrame(nullptr , serverInfoProcessor , *pManager , userSelectorWidget);
     pFrame->setContentsMargins(noMargins);

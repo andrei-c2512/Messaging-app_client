@@ -1,6 +1,6 @@
 #include "ChatPage.h"
 #include "StyleBase/StyleRepository.h"
-
+#include "Tools.h"
 
 
 MembersSection::MembersSection(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor) : QScrollArea(parent) , processor(ServerInfoProcessor)
@@ -55,6 +55,7 @@ void MembersSection::setContactList(std::vector<int> contactIdList, ServerInfoPr
     else
         pUserView->setIsAdmin(false);
 
+    pUserView->setVisible(true);
     for (short i = 0; i < contactList.size(); i++)
     {
         GroupMemberOptions::Features flags = init;
@@ -63,6 +64,8 @@ void MembersSection::setContactList(std::vector<int> contactIdList, ServerInfoPr
 
         if(adminId == contactList.at(i)->id())
             _viewList[i]->setIsAdmin(true);
+        else
+            _viewList[i]->setIsAdmin(false);
      
         ContactInfo::ContactStatus status = contactList[i]->flags();
 
@@ -88,7 +91,9 @@ void MembersSection::removeContact(int id)
         }
     }
 }
+
 void MembersSection::removeUserView() { pUserView->setVisible(false); }
+std::vector<ContactInfo*> MembersSection::contactList() const { return _contactInfoList; }
 
 void MembersSection::setupUi()
 {
@@ -117,18 +122,17 @@ void MembersSection::setAdmin(int adminId)
     {
         if (view->contactInfo()->id() == adminId)
             view->setIsAdmin(true);
+        else
+            view->setIsAdmin(false);
     }
 }
 
 
 
-ChatPage::ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor) : Page(parent , ServerInfoProcessor)
+ChatPage::ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget) : Page(parent , ServerInfoProcessor) , userSelector(widget)
 {
     setupUi();
     pInfo = nullptr;
-    connect(&ServerInfoProcessor, &ServerInfoProcessor::unknownListReceived, this, [= , &ServerInfoProcessor]() {
-        setChat(ServerInfoProcessor.firstChat());
-        });
 }
 
 void ChatPage::setupUi()
@@ -137,6 +141,13 @@ void ChatPage::setupUi()
 
     pAddButton = new QAction;
     pAddButton->setIcon(StyleRepository::ToolBar::addPixmap());
+    connect(pAddButton, &QAction::triggered, this, [=]() {
+        userSelector.setChatId(pInfo->id());
+        userSelector.setRole(UserSelectorWidget::Role::AddToGroupChat);
+        userSelector.flip(Tools::windowPos(pToolBar) + QPoint(0, pToolBar->height()) ,
+        ContactInfo::subtractFromList(serverInfoProcessor.friendList() , pMembersSection->contactList()));
+    });
+
     pLeaveButton = new QAction;
     pLeaveButton->setIcon(StyleRepository::ToolBar::leavePixmap());
     
@@ -172,6 +183,15 @@ void ChatPage::onMemberRemoval(int id)
 {
     pMembersSection->removeContact(id);
 }
+void ChatPage::onMemberAddition(int id)
+{
+    pMembersSection->setContactList(pInfo->members(), serverInfoProcessor, *pChat, pInfo->adminId());
+}
+
+void ChatPage::onNewAdmin(int id)
+{
+    pMembersSection->setContactList(pInfo->members(), serverInfoProcessor, *pChat, id);
+}
 
 void ChatPage::setChat(ChatInfo& info)
 {
@@ -179,11 +199,15 @@ void ChatPage::setChat(ChatInfo& info)
     {
         disconnect(pInfo, &ChatInfo::memberRemoved, this, &ChatPage::onMemberRemoval);
         disconnect(pInfo, &ChatInfo::removed, this, &ChatPage::onBeingRemoved);
+        disconnect(pInfo, &ChatInfo::newMember, this, &ChatPage::onMemberAddition);
+        disconnect(pInfo, &ChatInfo::newAdmin, this, &ChatPage::onNewAdmin);
     }
 
     pInfo = &info;
     connect(pInfo, &ChatInfo::memberRemoved, this, &ChatPage::onMemberRemoval);
+    connect(pInfo, &ChatInfo::newMember, this, &ChatPage::onMemberAddition);
     connect(pInfo, &ChatInfo::removed, this, &ChatPage::onBeingRemoved);
+    connect(pInfo, &ChatInfo::newAdmin, this, &ChatPage::onNewAdmin);
 
     if (info.isPrivate())
     {

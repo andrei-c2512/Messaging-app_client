@@ -63,6 +63,8 @@ public:
     bool operator<(const ContactInfo& info);
     bool operator>(const ContactInfo& info);
     bool operator==(const ContactInfo& info);
+
+    static std::vector<ContactInfo*> subtractFromList(std::vector<ContactInfo*> list1, std::vector<ContactInfo*> list2);
 signals:
     void removed(int id);
     //void moved(int id);
@@ -92,14 +94,16 @@ public:
     void setId(int id);
     void setReadOnlyMembers(std::vector<int> members_id);
     void setReadOnlyMembers(const QString& str);
+    //used when initializing
     void setAdminId(int id);
+    void setNewAdmin(int id);
     void setType(bool isPrivate);
     void removeMember(int id , int userId , bool forcefullyRemoved);
+    void addMember(int id);
     //the chat doesn't know who is the user of this app in the chat , so I have to give him the info
     void connectSlotsForPrivateChats(ContactInfo* info);
 
 
-    void addMember(int id);
     void addMessage(MessageInfo* mes);
     MessageInfo* addMessage( QString name , QString message);
     MessageInfo* addMessageToQueue( QString name , QString message);
@@ -125,6 +129,7 @@ public:
     bool operator>(ChatInfo* rhs);
     bool operator==(const ChatInfo* rhs) const;
     bool operator==(ChatInfo* rhs);
+
 signals:
     void newMessageAdded( MessageInfo& m );
     void newMessageInQueue(const MessageInfo& info , int chatId);
@@ -132,7 +137,9 @@ signals:
     void gotBlocked(bool b);
     void blockedYou(bool b);
     void memberRemoved(int id);
+    void newMember(int id);
     void removed(bool forcefully = true);
+    void newAdmin(int id);
 private:
     std::vector<MessageInfo*> _history;
     std::vector<MessageInfo*> _queue;
@@ -180,7 +187,7 @@ public:
     void addFriend(ContactInfo* contact);
     void addToBlockedList(ContactInfo* contact);
     void addToRequestList(ContactInfo* contact);
-  
+    void addUserByFlag(ContactInfo* contact);
     void removeChat(QString name);
 
     void removeFriend(int id);
@@ -210,6 +217,8 @@ public:
     ChatInfo* privateChatById(int id);
     ChatInfo* chatById(int id);
     ChatInfo& firstChat() const;
+
+    bool chatListEmpty() const;
 protected:
     void adaptChat(ChatInfo* info);
     void addToStrangerList(ContactInfo* info);
@@ -225,6 +234,7 @@ protected:
     std::vector<ContactInfo*> _blockedList;
     //for people encountered on groups that are not your friends
     std::vector<ContactInfo*> _strangerList;
+
 };
 
 #endif // USERINFO_H

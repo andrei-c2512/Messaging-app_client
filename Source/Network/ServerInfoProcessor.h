@@ -69,6 +69,7 @@ static const QString chat_isSenderSep = "\"" + chatPrefix + "isSender\":";
 static const QString chat_adminIdSep = "\"" + chatPrefix + "Admin\":";
 static const QString chat_readOnlyListSep = "\"" + chatPrefix + "ReadOnlyList\":";
 static const QString chat_removedSep = "\"" + chatPrefix + "Removed\":";
+static const QString chat_newMembersSep = "\"" + chatPrefix + "NewMembers\":";
 
 //for user info
 static const QString userPrefix = "user";
@@ -92,7 +93,8 @@ public:
         UnblockUser,
         CreateGroupChat,
         UpdateChatName,
-        RemoveFromGroup
+        RemoveFromGroup,
+        AddPeopleToTheChat
     };
     enum class InfoFromServer {
         SignedIn,  // will inform the user that he has succesfully signed in
@@ -110,7 +112,10 @@ public:
         UserUnblocked,
         UserUnblockedYou,
         NewChatName,
-        GroupMemberRemoved
+        GroupMemberRemoved,
+        GroupMemberAdded,
+        NecessaryContacts, //this is sent before a command that needs you to have certain contact data
+        NewAdmin
     };
 public:
     ServerInfoProcessor(QObject* object = nullptr);
@@ -133,6 +138,7 @@ public slots:
     void updateChatName(int chatId, QString newName);
     void removeFromGroup(int chatId, int userId);
     void leaveFromGroup(int chatId);
+    void addPeopleToGroup(int chatId , std::vector<int> idList);
     void setName(QString str) override;
     void setPassword(QString pas) override;
     void setEmail(QString email) override;
@@ -159,6 +165,7 @@ signals:
     void createdNewChat(int id);
     void addedToNewChat(int id);
     void unknownListReceived();
+    void allUserInfoReceived();
 private:
     //returns the position it remained at
     int processCommand(const QString& str , int start);
@@ -182,15 +189,21 @@ private:
     int processUserUnblockedYou(const QString& str, int start);
     int processNewChatName(const QString& str, int start);
     int processGroupMemberRemoval(const QString& str, int start);
+    int processNewGroupMembers(const QString& str, int start);
+    int processNecessaryContacts(const QString& str, int start);
+    int processNewAdmin(const QString& str, int start);
 
     static std::vector<int> extractIntsFromArr(const QString& str);
     void requestDataOfUnknownUsers();
+    void requestDataOfWaitingUsers();
 private:
     bool loggedIn;
+    bool userInfoReceived;
     QTimer* connectTimer;
     QTcpSocket* _socket;
 
     std::vector<ContactInfo*> _searchedForUsers;
+    std::vector<std::pair<int , int>> _awaitingContactInfoList;
 };
 
 #endif // USER_H

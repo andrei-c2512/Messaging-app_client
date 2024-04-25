@@ -3,6 +3,7 @@
 #include "ChatPage.h"
 #include <QStackedWidget>
 #include "SocialPage.h"
+#include "CustomWidgets/UserSelectorWidget.h"
 
 class SubpageManager : public QStackedWidget{
 public:
@@ -11,7 +12,7 @@ public:
         Social
     };
 public:
-    SubpageManager(QWidget* parent , ServerInfoProcessor& pInfoProcessor);
+    SubpageManager(QWidget* parent , ServerInfoProcessor& pInfoProcessor , UserSelectorWidget& userSelector);
     void setPage(Type type);
     ChatPage& chatPage();
     SocialPage& socialPage();

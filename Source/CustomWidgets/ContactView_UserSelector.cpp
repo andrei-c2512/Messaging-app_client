@@ -3,13 +3,17 @@
 
 ContactView_UserSelector::ContactView_UserSelector(QWidget* parent)  : ContactView(parent)
 {
+    pCheckbox = nullptr;
     pLayout->addStretch(1);
 }
 
 void ContactView_UserSelector::attatchCheckbox()
 {
-    pCheckbox = new UserCheckBox;
-    pLayout->addWidget(pCheckbox);
+    if (pCheckbox == nullptr)
+    {
+        pCheckbox = new UserCheckBox;
+        pLayout->addWidget(pCheckbox);
+    }
 }
 bool ContactView_UserSelector::checked() const
 {

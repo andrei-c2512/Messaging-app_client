@@ -30,6 +30,8 @@ public:
     void setNameVisible(bool visible);
     bool operator==(const ContactView& rhs);
     const ContactInfo* contactInfo() const;
+private slots:
+    void emitRemove(int id);
 signals:
     void remove(int id);
     void moved(int id);

@@ -116,7 +116,8 @@ public:
     {
         std::vector<int> memberList;
         QString nrStr;
-        qint16 i = str.indexOf('{' , start) + 1;
+        //it's necessary to put such a big variable because sometimes , message from server(like chat histories) can be HUGE
+        qsizetype i = str.indexOf('{' , start) + 1;
 
         while (str[i] != '}')
         {

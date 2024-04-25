@@ -464,6 +464,7 @@ void OptionSection::setupUi(UserSelectorWidget& userSelectorWidget)
 
     pMessageButton = new CustomButton(nullptr , ButtonStyleRepository::plusButton());
     connect(pMessageButton, &CustomButton::clicked, this, [=, &userSelectorWidget]() {
+        userSelectorWidget.setRole(UserSelectorWidget::Role::MakeGroupChat);
         userSelectorWidget.flip(Tools::windowPos(pMessageButton) + QPoint(pMessageButton->width() , pMessageButton->height()));
         });
 

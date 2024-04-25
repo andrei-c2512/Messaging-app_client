@@ -28,6 +28,7 @@ ContactView::ContactView(QWidget* parent)
     pLayout->addWidget(pProfilePicture);
     pLayout->addWidget(pName);
 
+    pInfo = nullptr;
     setObjectName("ContactView");
 }
 
@@ -43,16 +44,19 @@ void ContactView::setProfilePicture(QPixmap pixmap){
 }
 void ContactView::setContactInfo(ContactInfo& info)
 {
+    if(pInfo)
+        disconnect(pInfo, &ContactInfo::removed, this, &ContactView::emitRemove);
+
     pInfo = &info;
     pName->setText(pInfo->name());
+    //if it's empty then it's nullInfo
     if (pInfo->name().isEmpty() == false)
     {
-        connect(pInfo, &ContactInfo::removed, this, [=](int id) {
-            emit remove(id);
-        });
+        connect(pInfo, &ContactInfo::removed, this, &ContactView::emitRemove);
     }
 }
 
+void ContactView::emitRemove(int id){ emit remove(id);}
 void ContactView::setContactInfo(UserInfo& info)
 {
     pName->setText(info.name());

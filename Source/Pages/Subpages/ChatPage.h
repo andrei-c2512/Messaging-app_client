@@ -16,7 +16,7 @@
 #include "CustomStyledWidgets/CustomButton.h"
 #include "CustomWidgets/ContactView_MembersSection.h"
 #include <QToolBar>
-
+#include "CustomWidgets/UserSelectorWidget.h"
 
 class MembersSection : public QScrollArea {
     //to be styled in style.qss
@@ -27,6 +27,7 @@ public:
     void setAdmin(int admin);
     void removeContact(int id);
     void removeUserView();
+    std::vector<ContactInfo*> contactList() const;
 private:
     void setupUi();
 signals:
@@ -46,15 +47,18 @@ class ChatPage : public Page{
 public:
     Q_OBJECT
 public:
-    ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor);
+    ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget);
     void setChat(ChatInfo& pInfo);
     void setChat(int id);
 public slots:
     void onMemberRemoval(int id);
     void onBeingRemoved(bool forcefullyremoved);
+    void onMemberAddition(int id);
+    void onNewAdmin(int id);
 private:
     void setupUi();
 private:
+    UserSelectorWidget& userSelector;
     QHBoxLayout* pMainLayout;
     QVBoxLayout* pVerticalLayout;
     QToolBar* pToolBar;
