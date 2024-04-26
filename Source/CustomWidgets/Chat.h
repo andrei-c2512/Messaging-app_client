@@ -1,6 +1,7 @@
 #include "ChatHistory.h"
 #include "CustomStyledWidgets/CustomButton.h"
 #include <QStackedWidget>
+#include "UserSelectorWidget.h"
 
 class ChatTextEdit : public CustomTextEdit {
     Q_OBJECT
@@ -83,7 +84,7 @@ class Chat: public QWidget {
 public:
     Q_OBJECT
 public:
-    Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor);
+    Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget);
     void setChat(ChatInfo& pInfo);
     void setChat(int id);
     TitleTextEdit& groupNameEdit();

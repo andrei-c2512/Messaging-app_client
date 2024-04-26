@@ -71,6 +71,7 @@ signals:
     //true for blocking , false for unblocking
     void gotBlocked(bool b);
     void blockedYou(bool b);
+    void statusChanged(bool online);
 private:
     int _id;
     QString _name;

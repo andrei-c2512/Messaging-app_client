@@ -199,8 +199,16 @@ ContactInfo::ContactInfo(QObject* parent , QString name , ContactStatus flags0 ,
     : QObject(parent) , _flags(flags0) , _name(std::move(name)), _lastSeen(std::move(lastSeen))
 {}
 void ContactInfo::setFlags(ContactStatus f) { _flags = f; }
-void ContactInfo::addFlags(ContactStatus f) { _flags = _flags | f;  }
-void ContactInfo::removeFlags(ContactStatus f) { _flags = _flags & ~f; }
+void ContactInfo::addFlags(ContactStatus f) { 
+    if (f & Status::Online)
+        emit statusChanged(true);
+    _flags = _flags | f;  
+}
+void ContactInfo::removeFlags(ContactStatus f) { 
+    if (f & Status::Online)
+        emit statusChanged(false);
+    _flags = _flags & ~f; 
+}
 
 void ContactInfo::setName(QString name) { _name = std::move(name);}
 void ContactInfo::setLastSeen(QString lastSeen) { _lastSeen = std::move(lastSeen);}
@@ -454,6 +462,7 @@ void UserInfo::removeFriend(int id)
         ContactInfo* f = _friendList[i];
         if (_friendList[i]->id() == id)
         {
+            f->removeFlags(ContactInfo::Status::Friend);
             emit f->removed(id);
             _friendList.erase(_friendList.begin() + i);
             addToStrangerList(f);

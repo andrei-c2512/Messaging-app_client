@@ -180,7 +180,7 @@ void BlockUI::setupUi()
 }
 
 
-Chat::Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor) : QWidget(parent) , processor(ServerInfoProcessor)
+Chat::Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor, UserSelectorWidget& widget) : QWidget(parent) , processor(ServerInfoProcessor)
 {
     setupUi();
     signalsAndSlots();
@@ -191,12 +191,20 @@ Chat::Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor) : QWidget(
             setChat(ServerInfoProcessor.firstChat());
         });
 
+    connect(&widget, &UserSelectorWidget::switchToChat, this, [=](int chatId) {
+        setChat(chatId);
+        });
+
+    connect(&ServerInfoProcessor, &ServerInfoProcessor::accountDataCleared, this, [=]() {
+        lastChat = nullptr;
+        });
     lastChat = nullptr;
 }
 
 void Chat::updateName(const QString& str)
 {
     pGroupName->setText(str);
+    pGroupName->setTitle(str);
 }
 
 void Chat::signalsAndSlots()

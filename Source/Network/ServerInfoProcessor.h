@@ -115,7 +115,8 @@ public:
         GroupMemberRemoved,
         GroupMemberAdded,
         NecessaryContacts, //this is sent before a command that needs you to have certain contact data
-        NewAdmin
+        NewAdmin,
+        FriendStatus
     };
 public:
     ServerInfoProcessor(QObject* object = nullptr);
@@ -166,6 +167,7 @@ signals:
     void addedToNewChat(int id);
     void unknownListReceived();
     void allUserInfoReceived();
+    void accountDataCleared();
 private:
     //returns the position it remained at
     int processCommand(const QString& str , int start);
@@ -192,6 +194,7 @@ private:
     int processNewGroupMembers(const QString& str, int start);
     int processNecessaryContacts(const QString& str, int start);
     int processNewAdmin(const QString& str, int start);
+    int processFriendStatus(const QString& str, int start);
 
     static std::vector<int> extractIntsFromArr(const QString& str);
     void requestDataOfUnknownUsers();

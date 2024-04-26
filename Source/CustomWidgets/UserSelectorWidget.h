@@ -43,6 +43,7 @@ public:
     void flip(QPoint point);
 signals:
     void groupCreated(std::vector<const ContactInfo*> list);
+    void switchToChat(int chatId);
 private:
     void setupUi();
 private:

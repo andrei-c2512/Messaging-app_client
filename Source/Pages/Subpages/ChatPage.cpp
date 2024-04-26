@@ -62,12 +62,17 @@ void MembersSection::setContactList(std::vector<int> contactIdList, ServerInfoPr
         _viewList[i]->setVisible(true);
         _viewList[i]->setContactInfo(*contactList[i]);
 
+
         if(adminId == contactList.at(i)->id())
             _viewList[i]->setIsAdmin(true);
         else
             _viewList[i]->setIsAdmin(false);
      
         ContactInfo::ContactStatus status = contactList[i]->flags();
+        if (status & ContactInfo::Status::Friend)
+            _viewList[i]->setStatusVisibility(true);
+        else
+            _viewList[i]->setStatusVisibility(false);
 
         _viewList[i]->attatchOptions(processor, page, flags);
     }
@@ -131,11 +136,14 @@ void MembersSection::setAdmin(int adminId)
 
 ChatPage::ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget) : Page(parent , ServerInfoProcessor) , userSelector(widget)
 {
-    setupUi();
+    setupUi(widget);
     pInfo = nullptr;
+    connect(&ServerInfoProcessor, &ServerInfoProcessor::accountDataCleared, this, [=]() {
+        pInfo = nullptr;
+        });
 }
 
-void ChatPage::setupUi()
+void ChatPage::setupUi(UserSelectorWidget& userSelectorWidget)
 {
     pMembersSection = new MembersSection(nullptr, serverInfoProcessor);
 
@@ -168,7 +176,7 @@ void ChatPage::setupUi()
     pVerticalLayout->addWidget(pMembersSection);
 
     pMainLayout = new QHBoxLayout(this);
-    pChat = new Chat(nullptr , serverInfoProcessor);
+    pChat = new Chat(nullptr , serverInfoProcessor , userSelectorWidget);
 
     pMainLayout->addWidget(pChat, 4);
     pMainLayout->addLayout(pVerticalLayout, 1);

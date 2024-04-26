@@ -56,7 +56,7 @@ public slots:
     void onMemberAddition(int id);
     void onNewAdmin(int id);
 private:
-    void setupUi();
+    void setupUi(UserSelectorWidget& widget);
 private:
     UserSelectorWidget& userSelector;
     QHBoxLayout* pMainLayout;

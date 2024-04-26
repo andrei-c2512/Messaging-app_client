@@ -20,6 +20,8 @@ ServerInfoProcessor::ServerInfoProcessor(QObject* object)
         qDebug() << "Disconnected from server";
         clearAccountData();
         connectTimer->start();
+        userInfoReceived = false;
+        emit accountDataCleared();
     });
     connectTimer = new QTimer(this);
     connectTimer->setInterval(1000);
@@ -319,6 +321,9 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
                 break;
             case InfoFromServer::NewAdmin:
                 end = processNewAdmin(message, start);
+                break;
+            case InfoFromServer::FriendStatus:
+                end = processFriendStatus(message, start);
                 break;
             default:
                 qDebug() << "Received unkown message";
@@ -1006,6 +1011,23 @@ int ServerInfoProcessor::processFriendRemoval(const QString& str, int start)
     return str.indexOf(commandEnd, idPos) + commandEnd.length();
 }
 
+int ServerInfoProcessor::processFriendStatus(const QString& str, int start)
+{
+    int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
+    int onlinePos = str.indexOf(contact_onlineSep, idPos) + contact_onlineSep.length();
+
+    int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
+    bool online = str[onlinePos + 1] == 't';
+
+    ContactInfo* contact = findUser(id);
+    if (online)
+        contact->addFlags(ContactInfo::Status::Online);
+    else
+        contact->removeFlags(ContactInfo::Status::Online);
+
+    return str.indexOf(commandEnd, onlinePos) + commandEnd.length();
+}
+
 
 std::vector<int> ServerInfoProcessor::extractIntsFromArr(const QString& str)
 {
@@ -1046,7 +1068,10 @@ void ServerInfoProcessor::requestDataOfUnknownUsers()
     for (const auto& pair : uniqueIds)
         unknownUsersIdList.emplace_back(pair.first);
 
-    getInfoForUsers(unknownUsersIdList);
+    if(unknownUsersIdList.size() == 0)
+        emit allUserInfoReceived();
+    else
+        getInfoForUsers(unknownUsersIdList);
 }
 void ServerInfoProcessor::requestDataOfWaitingUsers()
 {

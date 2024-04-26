@@ -151,8 +151,19 @@ void UserSelectorWidget::setupUi()
             else if (_role == UserSelectorWidget::Role::AddToGroupChat)
                 processor.addPeopleToGroup(_chatId , list);
         }
-        else if(list.size() == 1 && _role == UserSelectorWidget::Role::AddToGroupChat)
-            processor.addPeopleToGroup(_chatId, list);
+        else if (list.size() == 1)
+        {
+            if(_role == UserSelectorWidget::Role::AddToGroupChat)
+                processor.addPeopleToGroup(_chatId, list);
+            else
+            {
+                ChatInfo* chat = processor.privateChatById(list.front());
+                if (chat)
+                    emit switchToChat(chat->id());
+                else
+                    processor.createPrivateChatWithFriend(list.front());
+            }
+        }
 
         setVisible(false);
     });

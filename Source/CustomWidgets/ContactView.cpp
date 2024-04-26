@@ -42,10 +42,15 @@ void ContactView::setProfilePicture(QPixmap pixmap){
     pProfilePicture->setPixmap1(QPixmap::fromImage(painter.image()));
 
 }
+void ContactView::onInfoDeletion() { pInfo = nullptr; }
+
 void ContactView::setContactInfo(ContactInfo& info)
 {
-    if(pInfo)
+    if (pInfo)
+    {
         disconnect(pInfo, &ContactInfo::removed, this, &ContactView::emitRemove);
+        disconnect(pInfo, &ContactInfo::destroyed, this, &ContactView::onInfoDeletion);
+    }
 
     pInfo = &info;
     pName->setText(pInfo->name());
@@ -53,7 +58,17 @@ void ContactView::setContactInfo(ContactInfo& info)
     if (pInfo->name().isEmpty() == false)
     {
         connect(pInfo, &ContactInfo::removed, this, &ContactView::emitRemove);
+        connect(pInfo, &ContactInfo::statusChanged, this, [=](bool online) {
+            ProfilePicLabel::Status status = (online) ? ProfilePicLabel::Status::Online : ProfilePicLabel::Status::Offline;
+            pProfilePicture->setStatus(status);
+            });
+        connect(pInfo, &ContactInfo::destroyed, this, &ContactView::onInfoDeletion);
     }
+    auto flags = info.flags();
+    if (flags & ContactInfo::Status::Online)
+        pProfilePicture->setStatus(ProfilePicLabel::Status::Online);
+    else
+        pProfilePicture->setStatus(ProfilePicLabel::Status::Offline);
 }
 
 void ContactView::emitRemove(int id){ emit remove(id);}
@@ -78,3 +93,8 @@ void ContactView::setNameFont(const QFont& font)
 }
 
 const ContactInfo* ContactView::contactInfo() const { return pInfo; }
+
+void ContactView::setStatusVisibility(bool enable)
+{
+    pProfilePicture->setStatusEnabled(enable);
+}

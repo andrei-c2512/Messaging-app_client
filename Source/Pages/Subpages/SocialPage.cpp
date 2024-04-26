@@ -46,6 +46,10 @@ void ContactList::setContactList(std::vector<ContactInfo*> contactList , ServerI
         _viewList[i]->setVisible(true);
         _viewList[i]->setContactInfo(*contactList[i]);
         _viewList[i]->attatchOptions( type , processor , chatPage, stackedW);
+        if (type == SearchType::FriendList)
+            _viewList[i]->setStatusVisibility(true);
+        else
+            _viewList[i]->setStatusVisibility(false);
     }
     
     _contactInfoList = contactList;
