@@ -403,7 +403,7 @@ ChatInfo& UserInfo::getChatById(int id)
 {
     return *Tools::binaryIdSearch<ChatInfo*>(_chatList, id);
 }
-ContactInfo* UserInfo::findUser_KnownLists(int id)
+ContactInfo* UserInfo::findUser_KnownLists(int id) const
 {
     ContactInfo* found = nullptr;
 
@@ -420,11 +420,11 @@ ContactInfo* UserInfo::findUser_KnownLists(int id)
     return found;
 }
 
-ContactInfo* UserInfo::findUser_UnknownList(int id)
+ContactInfo* UserInfo::findUser_UnknownList(int id) const
 {
     return Tools::binaryIdSearch(_strangerList, id);
 }
-ContactInfo* UserInfo::findUser(int id)
+ContactInfo* UserInfo::findUser(int id) const
 {
     ContactInfo* found = nullptr;
     if (found = findUser_KnownLists(id))
@@ -611,3 +611,23 @@ ChatInfo& UserInfo::firstChat() const {
 }
 
 bool UserInfo::chatListEmpty() const { return _chatList.size() == 0; }
+
+std::vector<QString> UserInfo::namesForContacts(std::vector<int> idList) const
+{
+    std::vector<QString> nameList(idList.size());
+    for (int i = 0 ; i < idList.size() ;)
+    {
+        if (idList[i] == _id)
+        {
+            idList.erase(idList.begin() + i);
+            continue;
+        }
+       
+
+        ContactInfo* c = findUser(idList[i]);
+        assert(c != nullptr);
+        nameList[i] = c->name();
+        i++;
+    }
+    return nameList;
+}

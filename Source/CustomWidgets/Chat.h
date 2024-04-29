@@ -2,11 +2,14 @@
 #include "CustomStyledWidgets/CustomButton.h"
 #include <QStackedWidget>
 #include "UserSelectorWidget.h"
+#include <QFileDialog>
+#include "MediaLabel.h"
+#include "ChatTextEdit.h"
 
-class ChatTextEdit : public CustomTextEdit {
+class ChatTextEdit : public STextEdit {
     Q_OBJECT
 public:
-    ChatTextEdit(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0);
+    ChatTextEdit(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0 , KeywordCombo& combo);
     void setCharacterLimit(int limit);
 signals:
     void messageCreated(const QString& name, const QString& message);
@@ -30,15 +33,35 @@ private:
     bool active = false;
     std::array<QColor, 2> colors;
 };
+
+class MediaScrollArea : public QScrollArea {
+    Q_OBJECT
+public:
+    MediaScrollArea(QWidget* parent = nullptr);
+public slots:
+    void addImages(QStringList list);
+    void onRemove(int index);
+private:
+    void setupUi();
+private:
+    QWidget* pWidget;
+    std::vector<MediaLabel*> label_list;
+    QHBoxLayout* pLayout;
+    int _maxDim;
+};
 class ChatMessageBar : public QWidget {
 public:
-    ChatMessageBar(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0);
+    ChatMessageBar(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0 ,KeywordCombo& keywordCombo);
     void setCharacterLimit(int n);
     ChatTextEdit& textEdit();
 private:
-    void setupUi(const ServerInfoProcessor& serverInfoProcessor0);
+    void setupUi(const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& keywordCombo);
 private:
     QVBoxLayout* pLayout;
+    QHBoxLayout*  pBarLayout;
+    KeywordCombo& keywordCombo;
+    MediaScrollArea* pMediaArea;
+    CustomButton* pUploadFileBtn;
     ChatTextEdit* pTextEdit;
     WarningTextLabel* pLimitShower;
     int _chLimit;
@@ -84,19 +107,21 @@ class Chat: public QWidget {
 public:
     Q_OBJECT
 public:
-    Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget);
+    Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget, KeywordCombo& keywordCombo);
     void setChat(ChatInfo& pInfo);
     void setChat(int id);
     TitleTextEdit& groupNameEdit();
     int chatId() const;
     void onGettingRemoved(bool forcefully);
+    void setMemberKeyWords(const std::vector<QString>& list);
+    void setMediaKeyWords(const std::vector<QString>& list);
 public slots:
     void createRoom();
     void onGettingBlocked(bool blocked);
     void onBlocking(bool blocked);
     void updateName(const QString& str);
 private:
-    void setupUi();
+    void setupUi(KeywordCombo& keywordCombo);
     void signalsAndSlots();
 private:
     QVBoxLayout* pMainLayout;

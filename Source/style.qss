@@ -22,11 +22,11 @@ CustomTextEdit{
 
 QScrollArea#ChatScrollArea{
     color: #EBECEF;
-    background: rgba(32, 35, 37);
+    background: rgb(32, 35, 37);
 }
 QScrollArea#ContactList{
     color: #EBECEF;
-    background: rgba(32, 35, 37);
+    background: rgb(32, 35, 37);
 }
 
 QWidget#ListContainer{
@@ -34,7 +34,7 @@ QWidget#ListContainer{
     background-color: #151f28;
 }
 QScrollArea ChatRecord{
-    color: rgba(233,232,232);
+    color: rgb(233,232,232);
     background-color: rgb(32, 35, 37);
 }
 
@@ -162,6 +162,18 @@ QToolButton{
     color: rgb(255, 255, 255);
 }
 QToolButton:hover{
+    background-color: rgb(35, 53, 67);
+    color: rgb(220, 214, 247);
+}
+
+KeywordCombo{
+    background-color: #0e151b;
+    color: rgb(220, 214, 247);
+    border-radius: 5px;
+}
+
+
+QLabel#KeywordLabel{
     background-color: rgb(35, 53, 67);
     color: rgb(220, 214, 247);
 }

@@ -19,11 +19,11 @@ public:
         Main
     };
 public:
-    PageManager(QWidget* parent , ServerInfoProcessor& pServerInfoProcessor , UserSelectorWidget& userSelectorWidget);
+    PageManager(QWidget* parent , ServerInfoProcessor& pServerInfoProcessor , UserSelectorWidget& userSelectorWidget , KeywordCombo& keywordCombo );
 signals:
     void pageChanged(PageType type);
 private:
-    void setupUi(UserSelectorWidget& userSelectorWidget);
+    void setupUi(UserSelectorWidget& userSelectorWidget , KeywordCombo& keywordCombo);
     void connectButtons(PageManager::PageType type , const Page* page);
     void setPage(PageManager::PageType type);
 private:

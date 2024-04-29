@@ -39,4 +39,7 @@ private:
 
 };
 
+
+
+
 #endif // CUSTOMTEXTEDIT_H

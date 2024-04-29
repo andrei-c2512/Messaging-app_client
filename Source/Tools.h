@@ -241,7 +241,7 @@ public:
         }
         return nullptr;
     }
-    static QPoint windowPos(QWidget* widget)
+    static QPoint windowPos(const QWidget* widget)
     {
         QPoint pos;
         while (widget->parent() != nullptr)

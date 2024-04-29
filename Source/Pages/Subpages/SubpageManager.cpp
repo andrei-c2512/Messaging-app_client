@@ -1,9 +1,9 @@
 #include "SubpageManager.h"
 
-SubpageManager::SubpageManager(QWidget* parent , ServerInfoProcessor& infoProcessor0 , UserSelectorWidget& userSelector)
+SubpageManager::SubpageManager(QWidget* parent , ServerInfoProcessor& infoProcessor0 , UserSelectorWidget& userSelector, KeywordCombo& keywordCombo)
     :QStackedWidget(parent) , infoProcessor(infoProcessor0)
 {
-    subPage_list = { new ChatPage(nullptr , infoProcessor , userSelector)};
+    subPage_list = { new ChatPage(nullptr , infoProcessor , userSelector , keywordCombo)};
     subPage_list.emplace_back(new SocialPage(nullptr, infoProcessor , static_cast<ChatPage&>(*subPage_list[0]) , *this));
     for(Page* page : subPage_list)
         QStackedWidget::addWidget(page);

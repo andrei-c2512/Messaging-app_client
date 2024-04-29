@@ -2,17 +2,17 @@
 
 
 
-MainPage::MainPage(QWidget* parent , ServerInfoProcessor& processor  , UserSelectorWidget& userSelectorWidget)
+MainPage::MainPage(QWidget* parent , ServerInfoProcessor& processor  , UserSelectorWidget& userSelectorWidget , KeywordCombo& keywordCombo)
     :Page(parent , processor)
 {
-    setupUi(userSelectorWidget);
+    setupUi(userSelectorWidget , keywordCombo);
     setObjectName("MainPage");
 }
 
-void MainPage::setupUi(UserSelectorWidget& userSelectorWidget)
+void MainPage::setupUi(UserSelectorWidget& userSelectorWidget, KeywordCombo& keywordCombo)
 {
     QMargins noMargins = QMargins(0 , 0 , 0 , 0);
-    pManager = new SubpageManager(nullptr , serverInfoProcessor , userSelectorWidget);
+    pManager = new SubpageManager(nullptr , serverInfoProcessor , userSelectorWidget, keywordCombo);
     pManager->setContentsMargins(noMargins);
     pFrame = new OptionSectionFrame(nullptr , serverInfoProcessor , *pManager , userSelectorWidget);
     pFrame->setContentsMargins(noMargins);

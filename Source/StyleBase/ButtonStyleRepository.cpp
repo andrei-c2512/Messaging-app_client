@@ -96,6 +96,17 @@ CustomizableButtonStyleHelper* ButtonStyleRepository::messageButton()
     return new CustomizableButtonStyleHelper(nullptr, std::move(vec));
 }
 
+
+CustomizableButtonStyleHelper* ButtonStyleRepository::uploadFileButton()
+{
+    std::vector<AnimationPrototype*> vec = { new AnimationPrototype(AnimationTool::Type::BackgroundColor , 	QColor(35, 53, 67) , QColor(14, 21, 27) , false),
+                                         new AnimationPrototype(AnimationTool::Type::BorderColor, QColor(35, 53, 67) , QColor(14, 21, 27) , true),
+                                         new AnimationPrototype(AnimationTool::Type::TextColor , QColor(0, 0, 0 , 0) , QColor(0, 0, 0 , 0) , true),
+                                         new IconColorAnimationPrototype(QColor(222, 217, 226) , QColor(107, 242, 154) , true , QPixmap(":/Images/Images/Icons/UploadFileIcon.png") , QSize(32 , 32)) };
+
+    return new CustomizableButtonStyleHelper(nullptr, std::move(vec));
+}
+
 C_SelectableButtonStyleHelper* ButtonStyleRepository::socialPageMenuButton(QPixmap map)
 {
     QSize iconSize = { 32 , 32};

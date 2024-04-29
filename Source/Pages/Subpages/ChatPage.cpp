@@ -134,16 +134,16 @@ void MembersSection::setAdmin(int adminId)
 
 
 
-ChatPage::ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget) : Page(parent , ServerInfoProcessor) , userSelector(widget)
+ChatPage::ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget, KeywordCombo& keywordCombo) : Page(parent , ServerInfoProcessor) , userSelector(widget)
 {
-    setupUi(widget);
+    setupUi(widget , keywordCombo);
     pInfo = nullptr;
     connect(&ServerInfoProcessor, &ServerInfoProcessor::accountDataCleared, this, [=]() {
         pInfo = nullptr;
         });
 }
 
-void ChatPage::setupUi(UserSelectorWidget& userSelectorWidget)
+void ChatPage::setupUi(UserSelectorWidget& userSelectorWidget, KeywordCombo& keywordCombo)
 {
     pMembersSection = new MembersSection(nullptr, serverInfoProcessor);
 
@@ -176,7 +176,7 @@ void ChatPage::setupUi(UserSelectorWidget& userSelectorWidget)
     pVerticalLayout->addWidget(pMembersSection);
 
     pMainLayout = new QHBoxLayout(this);
-    pChat = new Chat(nullptr , serverInfoProcessor , userSelectorWidget);
+    pChat = new Chat(nullptr , serverInfoProcessor , userSelectorWidget , keywordCombo);
 
     pMainLayout->addWidget(pChat, 4);
     pMainLayout->addLayout(pVerticalLayout, 1);

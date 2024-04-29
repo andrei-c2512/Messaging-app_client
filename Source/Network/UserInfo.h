@@ -208,9 +208,9 @@ public:
     //clears all the chats , friends etc etc
     void clearAccountData() noexcept;
     void transformChats() noexcept;
-    ContactInfo* findUser_KnownLists(int id);
-    ContactInfo* findUser_UnknownList(int id);
-    ContactInfo* findUser(int id);
+    ContactInfo* findUser_KnownLists(int id) const;
+    ContactInfo* findUser_UnknownList(int id) const;
+    ContactInfo* findUser(int id) const;
     std::vector<ContactInfo*> findUsers(std::vector<int> list);
     //returns true if a move occurred
     void moveUserToUnknownList(ContactInfo* id);
@@ -220,6 +220,7 @@ public:
     ChatInfo& firstChat() const;
 
     bool chatListEmpty() const;
+    std::vector<QString> namesForContacts(std::vector<int> idList) const;
 protected:
     void adaptChat(ChatInfo* info);
     void addToStrangerList(ContactInfo* info);

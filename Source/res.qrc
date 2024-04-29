@@ -43,6 +43,7 @@
         <file>Images/Icons/PlusIcon.png</file>
         <file>Images/Icons/CrownIcon.png</file>
         <file>Images/Icons/LeaveIcon.png</file>
+        <file>Images/Icons/UploadFileIcon.png</file>
     </qresource>
     <qresource prefix="/Special"/>
 </RCC>

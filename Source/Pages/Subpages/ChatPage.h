@@ -18,6 +18,7 @@
 #include <QToolBar>
 #include "CustomWidgets/UserSelectorWidget.h"
 
+
 class MembersSection : public QScrollArea {
     //to be styled in style.qss
     Q_OBJECT
@@ -47,7 +48,7 @@ class ChatPage : public Page{
 public:
     Q_OBJECT
 public:
-    ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget);
+    ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget, KeywordCombo& keywordCombo);
     void setChat(ChatInfo& pInfo);
     void setChat(int id);
 public slots:
@@ -56,7 +57,7 @@ public slots:
     void onMemberAddition(int id);
     void onNewAdmin(int id);
 private:
-    void setupUi(UserSelectorWidget& widget);
+    void setupUi(UserSelectorWidget& widget, KeywordCombo& keywordCombo);
 private:
     UserSelectorWidget& userSelector;
     QHBoxLayout* pMainLayout;

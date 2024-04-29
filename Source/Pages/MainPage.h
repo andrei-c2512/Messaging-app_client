@@ -15,9 +15,9 @@ public:
       Friends
     };
 public:
-    MainPage(QWidget* parent , ServerInfoProcessor& processor , UserSelectorWidget& userSelectorWidget);
+    MainPage(QWidget* parent , ServerInfoProcessor& processor , UserSelectorWidget& userSelectorWidget, KeywordCombo& keywordCombo);
 private:
-    void setupUi(UserSelectorWidget& userSelectorWidget);
+    void setupUi(UserSelectorWidget& userSelectorWidget, KeywordCombo& keywordCombo);
 private:
     QHBoxLayout*        pLayout;
     OptionSectionFrame* pFrame;

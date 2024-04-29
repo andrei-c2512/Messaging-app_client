@@ -1,5 +1,6 @@
 #include "Chat.h"
 #include "StyleBase/StyleRepository.h"
+#include "StyleBase/ButtonStyleRepository.h"
 
 WarningTextLabel::WarningTextLabel(QWidget* parent)
 {
@@ -59,9 +60,12 @@ void TitleTextEdit::focusOutEvent(QFocusEvent* event)
     CustomTextEdit::focusOutEvent(event);
 }
 
-ChatTextEdit::ChatTextEdit(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0) : CustomTextEdit(parent), serverInfoProcessor(serverInfoProcessor0)
+ChatTextEdit::ChatTextEdit(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& combo)
+    : STextEdit(parent , combo), serverInfoProcessor(serverInfoProcessor0)
 {
     setPlaceholderText("Type...");
+    addNewCollection(Qt::Key_At, {});
+    addNewCollection(Qt::Key_Asterisk, {});
 }
 void ChatTextEdit::keyPressEvent(QKeyEvent* event)
 {
@@ -70,8 +74,9 @@ void ChatTextEdit::keyPressEvent(QKeyEvent* event)
 
     if (toPlainText().length() <= _limit && !document()->isEmpty() && (key == 0x01000004 || key == 0x01000005))
         sendMessage();
+    //this is for testing
     else
-        CustomTextEdit::keyPressEvent(event);
+        STextEdit::keyPressEvent(event);
 }
 void ChatTextEdit::setCharacterLimit(int limit) { _limit = limit; }
 void ChatTextEdit::sendMessage()
@@ -80,9 +85,54 @@ void ChatTextEdit::sendMessage()
     CustomTextEdit::clear();
 }
 
-ChatMessageBar::ChatMessageBar(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0) : QWidget(parent)
+MediaScrollArea::MediaScrollArea(QWidget* parent) : QScrollArea(parent) 
 {
-    setupUi(serverInfoProcessor0);
+    setupUi();
+    _maxDim = 200;
+}
+
+void MediaScrollArea::addImages(QStringList list)
+{
+    char oldSize = label_list.size();
+    label_list.resize(label_list.size() + list.size());
+    for (char i = oldSize; i < label_list.size(); i++)
+    {
+        label_list[i] = new MediaLabel;
+        QPixmap pixmap = QPixmap(list[i - oldSize]);
+        if(pixmap.width() > pixmap.height())
+            label_list[i]->setPixmap(pixmap.scaledToWidth(_maxDim));
+        else
+            label_list[i]->setPixmap(pixmap.scaledToHeight(_maxDim));
+
+        label_list[i]->setIndex(i);
+        pLayout->insertWidget(0 , label_list[i]);  
+        connect(label_list[i], &MediaLabel::remove, this, &MediaScrollArea::onRemove);
+    }
+}
+
+void MediaScrollArea::onRemove(int index)
+{
+    label_list[index]->deleteLater();
+    label_list.erase(label_list.begin() + index);
+    for (int i = index; i < label_list.size(); i++)
+        label_list[i]->setIndex(i);
+
+    if (label_list.empty())
+        setVisible(false);
+}
+void MediaScrollArea::setupUi()
+{
+    pWidget = new QWidget;
+    pLayout = new QHBoxLayout(pWidget);
+    pLayout->addStretch(1);
+    setWidget(pWidget);
+    setWidgetResizable(true);
+}
+
+ChatMessageBar::ChatMessageBar(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& keywordCombo0) 
+    : QWidget(parent) , keywordCombo(keywordCombo0)
+{
+    setupUi(serverInfoProcessor0 , keywordCombo0);
 }
 
 ChatTextEdit& ChatMessageBar::textEdit() { return *pTextEdit; }
@@ -90,10 +140,31 @@ void ChatMessageBar::setCharacterLimit(int n) {
     _chLimit = n;
     pTextEdit->setCharacterLimit(n);
 }
-void ChatMessageBar::setupUi(const ServerInfoProcessor& serverInfoProcessor0)
+void ChatMessageBar::setupUi(const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& keywordCombo)
 {
     QMargins noMargins(0, 0, 0, 0);
-    pTextEdit = new ChatTextEdit(nullptr, serverInfoProcessor0);
+
+
+    pUploadFileBtn = new CustomButton(nullptr , ButtonStyleRepository::uploadFileButton());
+    connect(pUploadFileBtn, &CustomButton::clicked, this, [=]() {
+        QStringList list = QFileDialog::getOpenFileNames(this, "Upload file", "C://");
+        if (list.size())
+        {
+            pMediaArea->addImages(list);
+            pMediaArea->setVisible(true);
+        }
+        });
+    pTextEdit = new ChatTextEdit(nullptr, serverInfoProcessor0 , keywordCombo);
+
+    connect(pTextEdit, &ChatTextEdit::newList, &keywordCombo, &KeywordCombo::setKeywords);
+    connect(pTextEdit, &ChatTextEdit::keywordDiscontinued, &keywordCombo, &KeywordCombo::hide);
+    keywordCombo.setTextEdit(pTextEdit);
+
+    pBarLayout = new QHBoxLayout;
+    pBarLayout->addWidget(pUploadFileBtn, 0,  Qt::AlignTop | Qt::AlignLeft);
+    pBarLayout->addWidget(pTextEdit , 1);
+    pBarLayout->setSpacing(5);
+
     pLimitShower = new WarningTextLabel;
     pLimitShower->setColorForState("white", false);
     pLimitShower->setColorForState(QColor(235, 81, 96), true);
@@ -102,10 +173,14 @@ void ChatMessageBar::setupUi(const ServerInfoProcessor& serverInfoProcessor0)
     policy.setRetainSizeWhenHidden(true);
     pLimitShower->setSizePolicy(policy);
 
+    pMediaArea = new MediaScrollArea;
+    pMediaArea->setVisible(false);
+
     pLayout = new QVBoxLayout(this);
     pLayout->setSpacing(0);
     pLayout->setContentsMargins(noMargins);
-    pLayout->addWidget(pTextEdit);
+    pLayout->addWidget(pMediaArea);
+    pLayout->addLayout(pBarLayout);
     pLayout->addWidget(pLimitShower, Qt::AlignRight);
 
 
@@ -180,9 +255,10 @@ void BlockUI::setupUi()
 }
 
 
-Chat::Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor, UserSelectorWidget& widget) : QWidget(parent) , processor(ServerInfoProcessor)
+Chat::Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor, UserSelectorWidget& widget, KeywordCombo& keywordCombo) 
+    : QWidget(parent) , processor(ServerInfoProcessor)
 {
-    setupUi();
+    setupUi(keywordCombo);
     signalsAndSlots();
     lastPrivateChat = nullptr;
     lastPrivateChatUser = nullptr;
@@ -211,7 +287,7 @@ void Chat::signalsAndSlots()
 {
     connect(&pMessageBar->textEdit(), SIGNAL(messageCreated(const QString&, const QString&)), pChat, SLOT(addRecord(const QString&, const QString&)));
 }
-void Chat::setupUi()
+void Chat::setupUi(KeywordCombo& keywordCombo)
 {
     pGroupName = new TitleTextEdit;
     pGroupName->setFont(StyleRepository::Base::headerFont());
@@ -223,7 +299,7 @@ void Chat::setupUi()
     pChat = new ChatHistory;
 
 
-    pMessageBar = new ChatMessageBar(nullptr, processor);
+    pMessageBar = new ChatMessageBar(nullptr, processor , keywordCombo);
     pMessageBar->setSizePolicy(QSizePolicy(QSizePolicy::Preferred, QSizePolicy::MinimumExpanding));
     pMessageBar->textEdit().setShrinkToFit(true);
     pMessageBar->textEdit().setFont(StyleRepository::Base::chatFont());
@@ -302,7 +378,15 @@ void Chat::setChat(ChatInfo& info)
 
     pGroupName->setTitle(info.name());
     pChat->setChatInfo(&info);
+    setMemberKeyWords(processor.namesForContacts(info.members()));
     lastChat = &info;
+}
+
+void Chat::setMemberKeyWords(const std::vector<QString>& list) {
+    pMessageBar->textEdit().setWordsForKey(Qt::Key_At, list);
+}
+void Chat::setMediaKeyWords(const std::vector<QString>& list){
+    pMessageBar->textEdit().setWordsForKey(Qt::Key_Asterisk, list);
 }
 
 void Chat::onGettingBlocked(bool blocked)

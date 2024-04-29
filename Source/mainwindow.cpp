@@ -45,12 +45,16 @@ MainWindow::MainWindow(QWidget *parent)
     pSelectorWidget->setGeometry(QRect(QPoint(), selectorWidgetSize));
     pSelectorWidget->setFixedHeight(selectorWidgetSize.height());
 
+    KeywordCombo* pKeywordShower = new KeywordCombo;
+    pKeywordShower->setVisible(false);
     pSelectorWidget->setVisible(false);
-    pPageManager = new PageManager(nullptr , *pServerInfoProcessor , *pSelectorWidget);
+
+    pPageManager = new PageManager(nullptr , *pServerInfoProcessor , *pSelectorWidget , *pKeywordShower);
     setCentralWidget(pPageManager);
   
     //set the parent here and not at constructor so that it will be drawn over all widgets
     pSelectorWidget->setParent(this);
+    pKeywordShower->setParent(this);
 
     connect(pPageManager , &PageManager::pageChanged , pEffect , &BackgroundShiftOnMouseEffect::updateAccordingToPage);
     

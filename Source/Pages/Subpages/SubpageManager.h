@@ -12,7 +12,7 @@ public:
         Social
     };
 public:
-    SubpageManager(QWidget* parent , ServerInfoProcessor& pInfoProcessor , UserSelectorWidget& userSelector);
+    SubpageManager(QWidget* parent , ServerInfoProcessor& pInfoProcessor , UserSelectorWidget& userSelector, KeywordCombo& keywordCombo);
     void setPage(Type type);
     ChatPage& chatPage();
     SocialPage& socialPage();
