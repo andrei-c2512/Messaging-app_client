@@ -122,6 +122,7 @@ public:
     int id() const;
     int adminId() const;
     const std::vector<MessageInfo*> lastNMessages(int n) const;
+    //start starts from the end: so if start = 5 , it is 5 indexes from the end towards the begining
     const std::vector<MessageInfo*> lastNMessages(int start , int n) const;
 
     bool operator<(const ChatInfo* rhs) const;

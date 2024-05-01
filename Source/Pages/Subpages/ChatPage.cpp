@@ -78,7 +78,7 @@ void MembersSection::setContactList(std::vector<int> contactIdList, ServerInfoPr
     }
 
     _contactInfoList = contactList;
-    pMembersLabel->setText("Members - " + QString::number(contactIdList.size() + 1));
+    pMembersLabel->setText("Members - " + QString::number(contactIdList.size()));
 }
 
 void MembersSection::removeContact(int id)

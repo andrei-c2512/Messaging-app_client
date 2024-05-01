@@ -367,7 +367,7 @@ void ChatListView::setupUi()
 
     pScrollArea  ->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
     //pScrollArea->horizontalScrollBar()->setEnabled(false);
-
+    pScrollArea->setStyleSheet(StyleRepository::Base::qSliderStyle());
 
     pLayout = new QHBoxLayout(this);
     pLayout->setContentsMargins(noMargins);

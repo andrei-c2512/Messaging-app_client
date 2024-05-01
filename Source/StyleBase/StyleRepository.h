@@ -36,6 +36,8 @@ namespace StyleRepository{
 
     QPixmap defaultPfpPixmap();
     QPixmap crownPixmap();
+
+    QString qSliderStyle();
     }
     namespace MenuStyle {
         QString qMenuStyleSheet();

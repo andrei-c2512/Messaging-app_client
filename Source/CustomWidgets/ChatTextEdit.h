@@ -28,6 +28,7 @@ public:
 	void setWordsForKey(Qt::Key key, std::vector<QString> specialWords);
 	void addNewCollection(Qt::Key key , std::vector<QString> specialWords);
 	void clearCollection();
+	bool usedTabOrEnter() const;
 signals:
 	void newList(const std::vector<QString>& list);
 	void keywordDiscontinued();
@@ -37,10 +38,13 @@ protected:
 	std::vector<QString> matchingKeywords(Qt::Key key ,const QString& str) const;
 	void mousePressEvent(QMouseEvent* event) override;
 	void insertKeyword(QString str);
+	bool isSpecialKey(int key);
 private:
 	std::map<Qt::Key, std::vector<QString>> map;
 	bool _possibleKeyWordStarted;
 	bool _keywordCreated;
+	
+	bool _usedTabOrEnter = false;
 	qint16 _startPos;
 	Qt::Key _currentSpecialKey;
 	QChar _lastChar;

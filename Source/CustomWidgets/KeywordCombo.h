@@ -27,6 +27,7 @@ public:
 public:
 	void goUp();
 	void goDown();
+	void setSelected(int index);
 public slots:
 	void setKeywords(std::vector<QString> list);
 	void hide();

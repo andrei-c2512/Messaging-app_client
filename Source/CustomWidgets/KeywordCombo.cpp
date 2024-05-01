@@ -38,10 +38,10 @@ KeywordCombo::KeywordCombo(QWidget* parent) : QWidget(parent)
 	setAttribute(Qt::WA_StyleSheet);
 	setupUi();
 	edit = nullptr;
+	selectedIndex = 0;
 }
 void KeywordCombo::setKeywords(std::vector<QString> list)
 {
-	selectedIndex = 0;
 	keyWord_list = list;
 	short dif = short(keyWordLabel_list.size()) - short(keyWord_list.size());
 	short oldSize = (short)keyWordLabel_list.size();
@@ -71,7 +71,8 @@ void KeywordCombo::setKeywords(std::vector<QString> list)
 	setVisible(true);
 	QSize sizeH  (sizeHint());
 	setGeometry(QRect(Tools::windowPos(edit) - QPoint(0 , sizeH.height()), std::move(sizeH)));
-	keyWordLabel_list[selectedIndex]->setSelected(true);
+	if (keyWordLabel_list.size())
+		setSelected(0);
 }
 void KeywordCombo::goDown() {
 	if (keyWord_list.size() == 0) return;
@@ -90,6 +91,16 @@ void KeywordCombo::goUp()
 	if (selectedIndex == -1)
 		selectedIndex = keyWord_list.size() - 1;
 	keyWordLabel_list[selectedIndex]->setSelected(true);
+}
+
+void KeywordCombo::setSelected(int index)
+{
+	if (index >= 0 && index < keyWord_list.size())
+	{
+		keyWordLabel_list[selectedIndex]->setSelected(false);
+		keyWordLabel_list[index]->setSelected(true);
+		selectedIndex = index;
+	}
 }
 
 void KeywordCombo::setupUi()

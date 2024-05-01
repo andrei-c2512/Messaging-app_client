@@ -2,6 +2,7 @@
     <qresource prefix="/styles">
         <file>menuStyle.qss</file>
         <file>style.qss</file>
+        <file>sliderStyle.qss</file>
     </qresource>
     <qresource prefix="/Music">
         <file>Music/Nujabes-Aruarian Dance.m4a</file>

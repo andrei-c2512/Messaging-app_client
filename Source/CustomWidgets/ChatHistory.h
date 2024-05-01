@@ -48,12 +48,18 @@ class ChatScrollArea : public QScrollArea {
 public:
     ChatScrollArea(QWidget* parent = nullptr);
     void setScrollAreaWidget(QWidget* widget);
+signals:
+    void loadMore();
 protected:
     void resizeEvent(QResizeEvent* event);
-private slots:
-    void moveScrollBarToBottom(int min, int max);
+public slots:
+    void moveScrollBarToBottom();
 private:
     QWidget* pScrollAreaWidget;
+    bool _moveScrollBar;
+
+    int oldMin;
+    int oldMax;
 };
 
 
@@ -65,16 +71,19 @@ public:
     void setChatInfo(ChatInfo* info);
     const ChatRecord& recordAt(int index);
     int chatId() const;
+    QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;
 private:
     void addNRecords(int n);
     void deleteNRecords(int n);
     void empty();
 private:
     void setupUi();
-    void setupMessage(MessageInfo& info, ChatRecord* record);
+    void setupMessage(MessageInfo& info, ChatRecord* record , ChatRecord* previous);
 public slots:
     void addRecord(const QString& name, const QString& message);
     void addRecord(MessageInfo& message);
+    void onLoadMore();
 private:
     std::vector<ChatRecord*> recordList;
     QVBoxLayout* pHistoryLayout;
@@ -85,5 +94,6 @@ private:
     QHash<QString, int> userHash;
     int lastVal;
     int sequence;
-    static constexpr int messagesLoaded = 50;
+    static constexpr int messagesLoaded = 25;
+    int lastMessageLoadedIndex;
 };

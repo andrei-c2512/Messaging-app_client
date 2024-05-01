@@ -49,6 +49,7 @@ void STextEdit::clearCollection() {
 
 void STextEdit::keyPressEvent(QKeyEvent* event) 
 {
+	_usedTabOrEnter = false;
 	Qt::Key key = (Qt::Key)event->key();
 	if (key == Qt::Key::Key_Up)
 	{
@@ -69,21 +70,28 @@ void STextEdit::keyPressEvent(QKeyEvent* event)
 
 		_keywordCreated = false;
 		_possibleKeyWordStarted = false;
+		_usedTabOrEnter = true;
 		emit keywordDiscontinued();
 		return;
 	}
-	else if ((key == Qt::Key::Key_Enter || Qt::Key::Key_Tab == key) && _possibleKeyWordStarted)
+	else if (isSpecialKey(key))
 	{
-		QTextCursor cursor = textCursor();
-		QTextCharFormat linkFormat, original;
-		setTextCursor(cursor);
+		if (_possibleKeyWordStarted)
+		{
+			QTextCursor cursor = textCursor();
+			QTextCharFormat linkFormat, original;
+			setTextCursor(cursor);
 
-		QString string = QKeySequence(_currentSpecialKey).toString() + comboWidget.selectedString();
-		insertKeyword(string);
-		emit keywordDiscontinued();
-		_possibleKeyWordStarted = false;
-		_keywordCreated = false;
-		return;
+			QString string = QKeySequence(_currentSpecialKey).toString() + comboWidget.selectedString();
+			insertKeyword(string);
+			emit keywordDiscontinued();
+			_possibleKeyWordStarted = false;
+			_keywordCreated = false;
+			_usedTabOrEnter = true;
+			return;
+		}
+		else if (key != Qt::Key_Tab)
+			return;
 	}
 	else
 	{
@@ -166,6 +174,11 @@ void STextEdit::keyPressEvent(QKeyEvent* event)
 	CustomTextEdit::keyPressEvent(event);
 }
 
+
+bool STextEdit::isSpecialKey(int key)
+{
+	return key == Qt::Key_Tab || key == 0x01000004 || key == 0x01000005;
+}
 void STextEdit::insertKeyword(QString string)
 {
 	QTextCursor cursor = textCursor();
@@ -236,3 +249,5 @@ void STextEdit::mousePressEvent(QMouseEvent* event)
 	QTextCursor cursor = cursorForPosition(event->pos());
 	CustomTextEdit::mousePressEvent(event);
 }
+
+bool STextEdit::usedTabOrEnter() const { return _usedTabOrEnter; }

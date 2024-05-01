@@ -4,11 +4,14 @@
 //color difference factor
 static int fact = 20;
 static bool qMenuStyleInit = false;
+static bool qSliderStyleInit = false;
 static bool blockPixmapInit = false;
 static bool removePixmapInit = false;
 static bool callPixmapInit = false;
 
 static QString qMenuStyleStr;
+static QString qSliderStyleStr;
+
 static std::unique_ptr<QPixmap> _removePixmap;
 static std::unique_ptr<QPixmap> _callPixmap;
 static std::unique_ptr<QPixmap> _blockPixmap;
@@ -95,6 +98,24 @@ QString StyleRepository::MenuStyle::qMenuStyleSheet()
 
         file.close();
         return qMenuStyleStr;
+    }
+}
+QString StyleRepository::Base::qSliderStyle() {
+    if (qSliderStyleInit)
+        return qSliderStyleStr;
+    else
+    {
+        QFile file = QFile(":/styles/sliderStyle.qss");
+        if (file.exists() == false)
+            qDebug() << "WHAT";
+        if (file.open(QFile::ReadOnly) == false)
+            qDebug() << file.error();
+
+        qSliderStyleStr = file.readAll();
+        qSliderStyleInit = true;
+
+        file.close();
+        return qSliderStyleStr;
     }
 }
 

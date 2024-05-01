@@ -53,6 +53,7 @@ void ChatRecord::setupUi(bool waitingForResponse)
     pMessage->setObjectName("Message");
     pMessage->setContentsMargins(noMargins);
     pMessage->document()->setDocumentMargin(0);
+    pMessage->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     pUILayout = new QVBoxLayout;
     pUILayout->addLayout(pNameAndTimeLayout);
@@ -102,18 +103,44 @@ void ChatRecord::setInfo(MessageInfo* info)
 
 ChatScrollArea::ChatScrollArea(QWidget* parent) : QScrollArea(parent)
 {
+    _moveScrollBar = false;
     setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding));
     setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
     horizontalScrollBar()->setEnabled(false);
     QScrollBar* verticalScrollBar = QScrollArea::verticalScrollBar();
-    connect(verticalScrollBar, SIGNAL(rangeChanged(int, int)), this, SLOT(moveScrollBarToBottom(int, int)));
+
     setObjectName("ChatScrollArea");
+
+    oldMin = verticalScrollBar->minimum(); 
+    oldMax = verticalScrollBar->maximum();
+
+    connect(verticalScrollBar, &QScrollBar::valueChanged, this, [=](int value) {
+        if (value < verticalScrollBar->maximum() * 0.25f)
+        emit loadMore();
+    });
+    connect(verticalScrollBar, &QScrollBar::rangeChanged, this, [=](int min , int max) {
+        Q_UNUSED(min)
+        if (_moveScrollBar == true)
+        {
+            verticalScrollBar->setValue(max);
+            _moveScrollBar = false;
+        }
+        });
+
+    connect(verticalScrollBar, &QScrollBar::rangeChanged, this, [=](int min , int max) {
+       if (verticalScrollBar->value() != verticalScrollBar->maximum())
+       {
+           verticalScrollBar->setValue(max - oldMax + verticalScrollBar->value());
+           oldMax = max;
+       }
+        qDebug() << "new max " << max << ' ' << "Page step" << verticalScrollBar->pageStep();
+       });
+    setStyleSheet(StyleRepository::Base::qSliderStyle());
+    
 }
-void ChatScrollArea::moveScrollBarToBottom(int min, int max)
+void ChatScrollArea::moveScrollBarToBottom()
 {
-    Q_UNUSED(min);
-    QScrollBar* verticalScrollBar = QScrollArea::verticalScrollBar();
-    verticalScrollBar->setValue(std::move(max));
+    _moveScrollBar = true;
 }
 
 void ChatScrollArea::setScrollAreaWidget(QWidget* widget) { pScrollAreaWidget = widget; }
@@ -132,7 +159,10 @@ QString ChatRecord::name() const { return pName->text(); }
 
 ChatHistory::ChatHistory(QWidget* parent) : QWidget(parent)
 {
+    lastMessageLoadedIndex = 0;
     setupUi();
+  
+    connect(pScrollArea, &ChatScrollArea::loadMore, this, &ChatHistory::onLoadMore);
 }
 void ChatHistory::setupUi()
 {
@@ -160,7 +190,7 @@ void ChatHistory::addNRecords(int n)
     for (int i = lastSize; i < lastSize + n; i++)
     {
         recordList[i] = new ChatRecord(nullptr, &NullInfo::instance().nullMessage());
-        pHistoryLayout->insertWidget(pHistoryLayout->count() - 1, recordList[i]);
+        pHistoryLayout->insertWidget(0, recordList[i]);
     }
     //std::for_each(std::begin(recordList) + lastSize, std::end(recordList) , [=](ChatRecord* record){
     //    record =  new ChatRecord(nullptr , &NullInfo::instance().nullMessage());
@@ -176,29 +206,48 @@ void ChatHistory::deleteNRecords(int n)
     recordList.resize(recordList.size() - n);
 }
 
+QSize ChatHistory::sizeHint() const
+{
+    return QWidget::sizeHint();
+}
+
+QSize ChatHistory::minimumSizeHint() const {
+    return QWidget::sizeHint();
+}
 
 void ChatHistory::addRecord(const QString& name, const QString& message)
 {
     MessageInfo* messageInfo = pInfo->addMessageToQueue(name, message);
     ChatRecord* record = new ChatRecord(nullptr, messageInfo);
 
-    setupMessage(*messageInfo, record);
+    setupMessage(*messageInfo, record , recordList.back());
 
     recordList.emplace_back(record);
     pHistoryLayout->insertWidget(pHistoryLayout->count() - 1, record);
+    pScrollArea->moveScrollBarToBottom();
 }
 void ChatHistory::addRecord(MessageInfo& message)
 {
     ChatRecord* record = new ChatRecord(nullptr, &message);
 
-    setupMessage(message, record);
+    setupMessage(message, record , recordList.back());
+
+    QScrollBar* scrollBar = pScrollArea->verticalScrollBar();
+    bool moveToBottom = false;
+
+    if (scrollBar->value() == scrollBar->maximum())
+        moveToBottom = true;
 
     recordList.emplace_back(record);
     pHistoryLayout->insertWidget(pHistoryLayout->count() - 1, record);
+    if(moveToBottom)
+        pScrollArea->moveScrollBarToBottom();
 }
 void ChatHistory::setChatInfo(ChatInfo* info) {
     if (pInfo)
+    {
         disconnect(pInfo, SIGNAL(newMessageAdded(MessageInfo&)), this, SLOT(addRecord(MessageInfo&)));
+    }
 
     pInfo = info;
     connect(pInfo, &ChatInfo::destroyed, this, [=]() {
@@ -206,6 +255,7 @@ void ChatHistory::setChatInfo(ChatInfo* info) {
         });
     connect(info, SIGNAL(newMessageAdded(MessageInfo&)), this, SLOT(addRecord(MessageInfo&)));
     std::vector<MessageInfo*> infoList = pInfo->lastNMessages(messagesLoaded);
+    lastMessageLoadedIndex = std::min(messagesLoaded , (int)infoList.size());
 
     int recordDiff = int(infoList.size() - recordList.size());
     if (recordDiff > 0)
@@ -213,6 +263,8 @@ void ChatHistory::setChatInfo(ChatInfo* info) {
     else
         deleteNRecords(-recordDiff);
 
+
+    pScrollArea->moveScrollBarToBottom();
     userHash.clear();
     sequence = 1;
     lastVal = -1;
@@ -226,14 +278,35 @@ void ChatHistory::setChatInfo(ChatInfo* info) {
     }
     lastVal = val;
     recordList[0]->setInfo(infoList[0]);
+    recordList[0]->setStatus(false);
     for (int i = 1; i < infoList.size(); i++)
     {
-        setupMessage(*infoList[i], recordList[i]);
+        setupMessage(*infoList[i], recordList[i], recordList[i - 1]);
         recordList[i]->setInfo(infoList[i]);
     }
-
+    if (messagesLoaded != infoList.size())
+        recordList.back()->setStatus(true);
 }
-void ChatHistory::setupMessage(MessageInfo& info, ChatRecord* record)
+void ChatHistory::onLoadMore()
+{
+    std::vector<MessageInfo*> infoList = pInfo->lastNMessages(lastMessageLoadedIndex , messagesLoaded);
+    addNRecords(infoList.size());
+    for (int i = lastMessageLoadedIndex; i < lastMessageLoadedIndex + infoList.size(); i++)
+    {
+        setupMessage(*infoList[i - lastMessageLoadedIndex], recordList[i] , recordList[i - 1]);
+        recordList[i]->setInfo(infoList[i - lastMessageLoadedIndex]);
+    }
+    if (infoList.size() != 0)
+    {
+        //pScrollArea->moveScrollBarToBottom();
+        lastMessageLoadedIndex += infoList.size();
+    }
+    else
+    {
+        recordList.back()->setStatus(true);
+    }
+}
+void ChatHistory::setupMessage(MessageInfo& info, ChatRecord* record ,ChatRecord* previous)
 {
     int& val = userHash[info.name()];
     if (val == 0)
@@ -250,11 +323,11 @@ void ChatHistory::setupMessage(MessageInfo& info, ChatRecord* record)
     }
     else
     {
-        record->setStatus(true);
+        previous->setStatus(true);
         lastVal = val;
 
         QMargins margins = QMargins(0, 30, 0, 0);
-        record->setContentsMargins(margins);
+        previous->setContentsMargins(margins);
     }
     record->setInfo(&info);
 }

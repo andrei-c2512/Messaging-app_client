@@ -72,11 +72,13 @@ void ChatTextEdit::keyPressEvent(QKeyEvent* event)
     int key = event->key();
     //0x01000004 and 0x01000005 are the value for both enters on the keyboard
 
-    if (toPlainText().length() <= _limit && !document()->isEmpty() && (key == 0x01000004 || key == 0x01000005))
-        sendMessage();
-    //this is for testing
-    else
-        STextEdit::keyPressEvent(event);
+    STextEdit::keyPressEvent(event);
+    if ((key == 0x01000004 || key == 0x01000005))
+    {     
+        if(!usedTabOrEnter() && toPlainText().length() <= _limit && !document()->isEmpty())
+            sendMessage();
+    }
+
 }
 void ChatTextEdit::setCharacterLimit(int limit) { _limit = limit; }
 void ChatTextEdit::sendMessage()

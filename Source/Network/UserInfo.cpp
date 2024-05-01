@@ -91,9 +91,9 @@ MessageInfo* ChatInfo::addMessageToQueue( QString name , QString message)
 const std::vector<MessageInfo*> ChatInfo::lastNMessages(int start , int n) const
 {
     std::vector<MessageInfo*> list;
-    n = std::min(n , (int)_history.size() - start);
+    n = std::max(0 , (int)_history.size() - start - n);
 
-    for(int i = start ; i < start + n ; i++)
+    for(int i = (int)_history.size() - start - 1 ; i  >= n ; i--)
         list.emplace_back(_history[i]);
     return list;
 }
@@ -105,7 +105,7 @@ const std::vector<MessageInfo*> ChatInfo::lastNMessages(int n) const
     else
     {
         std::vector<MessageInfo*> list;
-        for(int i = 0 ; i <  n ; i++)
+        for(int i = _history.size() - 1 ; i >= _history.size() - n; i--)
             list.emplace_back(_history[i]);
         return list;
     }
@@ -614,20 +614,17 @@ bool UserInfo::chatListEmpty() const { return _chatList.size() == 0; }
 
 std::vector<QString> UserInfo::namesForContacts(std::vector<int> idList) const
 {
-    std::vector<QString> nameList(idList.size());
-    for (int i = 0 ; i < idList.size() ;)
+    std::vector<QString> nameList;
+    nameList.reserve(idList.size());
+    for (int i = 0 ; i < idList.size() ; i++)
     {
-        if (idList[i] == _id)
-        {
-            idList.erase(idList.begin() + i);
-            continue;
-        }
-       
-
-        ContactInfo* c = findUser(idList[i]);
-        assert(c != nullptr);
-        nameList[i] = c->name();
-        i++;
+       if (_id != idList[i])
+       {
+           ContactInfo* c = findUser(idList[i]);
+           assert(c != nullptr);
+           nameList.emplace_back(c->name());
+       }
     }
+    nameList.shrink_to_fit();
     return nameList;
 }
