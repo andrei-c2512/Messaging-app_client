@@ -193,24 +193,10 @@ void STextEdit::insertKeyword(QString string)
 	cursor.deleteChar();
 	cursor.deletePreviousChar();
 
-	cursor.insertHtml("<!DOCTYPE html>"
-		"<html>"
-		"<head>"
-		"<style> "
-		".rounded-light-blue{"
-		"	background-color: #16c172;"
-		"	border-radius: 2px;"
-		"	display: inline-block;"
-		"}"
-		"</style>"
-		"	</head>"
-		"	<body>"
-		"	<!--Use the class in a span element to style the word \"floppa\" -->"
-		"	<span class=\"rounded-light-blue\"><a href = \"www.google.com\">" + string + "</a></span>"
-		"	</body>"
-		"	</html>");
+	cursor.insertHtml(StyleRepository::Base::applyHtmlForTag(string));
 	cursor.setPosition(cursor.selectionEnd());
 	cursor.setCharFormat(original);
+	cursor.insertText(" ");
 }
 
 STextEdit::WritingResult STextEdit::isWritingAKeyWord(Qt::Key key, QString str) const

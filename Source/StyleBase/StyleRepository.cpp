@@ -118,6 +118,25 @@ QString StyleRepository::Base::qSliderStyle() {
         return qSliderStyleStr;
     }
 }
+QString StyleRepository::Base::applyHtmlForTag(const QString& str)
+{
+   QString str0 = 
+        "<html>"
+        "<style type = \"text/css\">"
+        ".styled-text{"
+        "    background-color: lightgreen;"
+        "    color: black;"
+        "    border-radius: 3px;"
+        "    border: 2px solid black;"
+        "    padding: 3px;"
+        "}"
+        "</style>"
+        "<body>"
+        "<span class = \"styled-text\"><a href = \"www.google.com\"><font color=\"black\">" + str + "</font></a></span>"
+        "</body>"
+       "</html>";
+   return str0;
+}
 
 QPixmap StyleRepository::MenuStyle::callPixmap(){ return *_callPixmap;}
 QPixmap StyleRepository::MenuStyle::removePixmap(){ return *_removePixmap;}

@@ -9,7 +9,8 @@
 #include <QHBoxLayout>
 #include <QTextDocument>
 #include <QAbstractTextDocumentLayout>
-
+#include <QTextCursor>
+#include <QImageReader>
 class CustomTextEdit : public QTextEdit{
     Q_OBJECT;
     Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor NOTIFY textColorChanged());
@@ -27,6 +28,7 @@ public:
     using QTextEdit::textColor;
     using QTextEdit::setTextColor;
     void setVisible(bool visible ) override;
+    void insertImage(QUrl url);
 private slots:
     void updateMaxHeight(const QSizeF& size);
 signals:

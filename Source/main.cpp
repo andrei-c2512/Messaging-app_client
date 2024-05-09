@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
     StyleRepository::initializeVariables();
     MainWindow w;
     a.setStyle(new CustomStyle);
+
     w.show();
     return a.exec();
 }

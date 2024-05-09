@@ -8,6 +8,8 @@
 #include <algorithm>
 #include "Tools.h"
 #include <QFlags>
+#include <QUrl>
+
 class MessageInfo : public QObject{
     Q_OBJECT
 public:
@@ -21,6 +23,7 @@ public:
     void setAt(int i , QString str);
     void setTimestamp(QString str);
     void setTimestamp(QDateTime str);
+    static const QString imageSign;
 signals:
     void outOfQueue();
 private:
@@ -65,6 +68,7 @@ public:
     bool operator==(const ContactInfo& info);
 
     static std::vector<ContactInfo*> subtractFromList(std::vector<ContactInfo*> list1, std::vector<ContactInfo*> list2);
+
 signals:
     void removed(int id);
     //void moved(int id);
@@ -103,10 +107,11 @@ public:
     void addMember(int id);
     //the chat doesn't know who is the user of this app in the chat , so I have to give him the info
     void connectSlotsForPrivateChats(ContactInfo* info);
-
+    
 
     void addMessage(MessageInfo* mes);
     MessageInfo* addMessage( QString name , QString message);
+    MessageInfo* addMessageToQueue(QString name, QUrl url);
     MessageInfo* addMessageToQueue( QString name , QString message);
     MessageInfo* addWaitingMessage( QString name , QString message);
 

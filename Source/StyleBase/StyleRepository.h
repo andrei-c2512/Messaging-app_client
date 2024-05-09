@@ -38,6 +38,7 @@ namespace StyleRepository{
     QPixmap crownPixmap();
 
     QString qSliderStyle();
+    QString applyHtmlForTag(const QString& str);
     }
     namespace MenuStyle {
         QString qMenuStyleSheet();

@@ -252,6 +252,17 @@ public:
         }
         return pos;
     }
+    //returns the position of the first string in the "searchedList" that has been found in the "str"
+    static int indexOf(const QString& str, const std::vector<QString>& searchedList, int start = 0)
+    {
+        for (const QString& elem : searchedList)
+        {
+            int pos = str.indexOf(elem, start);
+            if (pos != -1)
+                return pos;
+        }
+        return -1;
+    }
 };
 
 #endif // TOOLS_H

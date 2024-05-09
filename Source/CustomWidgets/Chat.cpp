@@ -60,43 +60,23 @@ void TitleTextEdit::focusOutEvent(QFocusEvent* event)
     CustomTextEdit::focusOutEvent(event);
 }
 
-ChatTextEdit::ChatTextEdit(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& combo)
-    : STextEdit(parent , combo), serverInfoProcessor(serverInfoProcessor0)
-{
-    setPlaceholderText("Type...");
-    addNewCollection(Qt::Key_At, {});
-    addNewCollection(Qt::Key_Asterisk, {});
-}
-void ChatTextEdit::keyPressEvent(QKeyEvent* event)
-{
-    int key = event->key();
-    //0x01000004 and 0x01000005 are the value for both enters on the keyboard
-
-    STextEdit::keyPressEvent(event);
-    if ((key == 0x01000004 || key == 0x01000005))
-    {     
-        if(!usedTabOrEnter() && toPlainText().length() <= _limit && !document()->isEmpty())
-            sendMessage();
-    }
-
-}
-void ChatTextEdit::setCharacterLimit(int limit) { _limit = limit; }
-void ChatTextEdit::sendMessage()
-{
-    emit messageCreated(serverInfoProcessor.name(), CustomTextEdit::toPlainText());
-    CustomTextEdit::clear();
-}
 
 MediaScrollArea::MediaScrollArea(QWidget* parent) : QScrollArea(parent) 
 {
     setupUi();
     _maxDim = 200;
+    label_list.reserve(10);
 }
 
 void MediaScrollArea::addImages(QStringList list)
 {
     char oldSize = label_list.size();
     label_list.resize(label_list.size() + list.size());
+    url_list.resize(url_list.size() + list.size());
+
+    for (int i = oldSize; i < list.size(); i++)
+        url_list[i] = list[i];
+
     for (char i = oldSize; i < label_list.size(); i++)
     {
         label_list[i] = new MediaLabel;
@@ -110,17 +90,26 @@ void MediaScrollArea::addImages(QStringList list)
         pLayout->insertWidget(0 , label_list[i]);  
         connect(label_list[i], &MediaLabel::remove, this, &MediaScrollArea::onRemove);
     }
+    emit addedMedia();
+}
+
+int MediaScrollArea::count() const
+{
+    return label_list.size();
 }
 
 void MediaScrollArea::onRemove(int index)
 {
     label_list[index]->deleteLater();
     label_list.erase(label_list.begin() + index);
+    url_list.erase(url_list.begin() + index);
+
     for (int i = index; i < label_list.size(); i++)
         label_list[i]->setIndex(i);
 
     if (label_list.empty())
         setVisible(false);
+    emit removedMedia();
 }
 void MediaScrollArea::setupUi()
 {
@@ -129,6 +118,61 @@ void MediaScrollArea::setupUi()
     pLayout->addStretch(1);
     setWidget(pWidget);
     setWidgetResizable(true);
+}
+
+void MediaScrollArea::clear() {
+    for (QLabel* label : label_list)
+        label->deleteLater();
+    label_list.resize(0);
+    setVisible(false);
+
+}
+const std::vector<QUrl>& MediaScrollArea::mediaUrls() const {
+    return url_list;
+}
+
+
+ChatTextEdit::ChatTextEdit(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& combo, MediaScrollArea& mediaArea0)
+    : STextEdit(parent, combo), serverInfoProcessor(serverInfoProcessor0), mediaArea(mediaArea0)
+{
+    setPlaceholderText("Type...");
+    addNewCollection(Qt::Key_At, {});
+    addNewCollection(Qt::Key_Asterisk, {});
+    connect(&mediaArea, &MediaScrollArea::addedMedia, this, [this]() {
+        setFocus();
+        });
+    connect(&mediaArea, &MediaScrollArea::removedMedia, this, [this]() {
+        setFocus();
+        });
+}
+void ChatTextEdit::keyPressEvent(QKeyEvent* event)
+{
+    int key = event->key();
+    //0x01000004 and 0x01000005 are the value for both enters on the keyboard
+
+    STextEdit::keyPressEvent(event);
+    if ((key == 0x01000004 || key == 0x01000005))
+    {
+        if (!usedTabOrEnter() && toPlainText().length() <= _limit)
+        {
+            if(!document()->isEmpty())
+                sendMessage();
+            if (mediaArea.count() != 0)
+                sendMedia();
+        }
+    }
+}
+void ChatTextEdit::setCharacterLimit(int limit) { _limit = limit; }
+void ChatTextEdit::sendMessage()
+{
+    emit messageCreated(serverInfoProcessor.name(), CustomTextEdit::toPlainText());
+    CustomTextEdit::clear();
+}
+
+void ChatTextEdit::sendMedia()
+{
+    emit mediaMessageCreated(serverInfoProcessor.name(), mediaArea.mediaUrls());
+    mediaArea.clear();
 }
 
 ChatMessageBar::ChatMessageBar(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& keywordCombo0) 
@@ -156,7 +200,10 @@ void ChatMessageBar::setupUi(const ServerInfoProcessor& serverInfoProcessor0, Ke
             pMediaArea->setVisible(true);
         }
         });
-    pTextEdit = new ChatTextEdit(nullptr, serverInfoProcessor0 , keywordCombo);
+    pMediaArea = new MediaScrollArea;
+    pMediaArea->setVisible(false);
+
+    pTextEdit = new ChatTextEdit(nullptr, serverInfoProcessor0 , keywordCombo , *pMediaArea);
 
     connect(pTextEdit, &ChatTextEdit::newList, &keywordCombo, &KeywordCombo::setKeywords);
     connect(pTextEdit, &ChatTextEdit::keywordDiscontinued, &keywordCombo, &KeywordCombo::hide);
@@ -175,8 +222,6 @@ void ChatMessageBar::setupUi(const ServerInfoProcessor& serverInfoProcessor0, Ke
     policy.setRetainSizeWhenHidden(true);
     pLimitShower->setSizePolicy(policy);
 
-    pMediaArea = new MediaScrollArea;
-    pMediaArea->setVisible(false);
 
     pLayout = new QVBoxLayout(this);
     pLayout->setSpacing(0);
@@ -288,6 +333,7 @@ void Chat::updateName(const QString& str)
 void Chat::signalsAndSlots()
 {
     connect(&pMessageBar->textEdit(), SIGNAL(messageCreated(const QString&, const QString&)), pChat, SLOT(addRecord(const QString&, const QString&)));
+    connect(&pMessageBar->textEdit(), SIGNAL(mediaMessageCreated(const QString&, const std::vector<QUrl>&)), pChat, SLOT(addMediaRecords(const QString&, const std::vector<QUrl>&)));
 }
 void Chat::setupUi(KeywordCombo& keywordCombo)
 {
@@ -298,7 +344,7 @@ void Chat::setupUi(KeywordCombo& keywordCombo)
     connect(pGroupName, &TitleTextEdit::titleChanged, this, [=](QString str) {
         processor.updateChatName(pChat->chatId(), str);
         });
-    pChat = new ChatHistory;
+    pChat = new ChatHistory(nullptr , processor);
 
 
     pMessageBar = new ChatMessageBar(nullptr, processor , keywordCombo);

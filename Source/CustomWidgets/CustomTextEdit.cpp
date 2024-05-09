@@ -39,6 +39,19 @@ void CustomTextEdit::updateMaxHeight(const QSizeF& size)
     _maxHeight = size.height() + val;
 }
 
+void CustomTextEdit::insertImage(QUrl url)
+{
+    QImage image = QImageReader(url.toString()).read();
+    QTextDocument* doc = document();
+    doc->addResource(QTextDocument::ImageResource, url, QVariant(image));
+    QTextCursor cursor(textCursor());
+    QTextImageFormat format;
+    format.setWidth(image.width());
+    format.setHeight(image.height());
+    format.setName(url.fileName());
+    cursor.insertImage(format);
+}
+
 QSize CustomTextEdit::sizeHint() const
 {
     if(_shrinkToFit)

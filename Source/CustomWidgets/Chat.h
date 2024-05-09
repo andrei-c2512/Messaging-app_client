@@ -6,21 +6,6 @@
 #include "MediaLabel.h"
 #include "ChatTextEdit.h"
 
-class ChatTextEdit : public STextEdit {
-    Q_OBJECT
-public:
-    ChatTextEdit(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0 , KeywordCombo& combo);
-    void setCharacterLimit(int limit);
-signals:
-    void messageCreated(const QString& name, const QString& message);
-protected:
-    void keyPressEvent(QKeyEvent* event) override;
-private:
-    void sendMessage();
-private:
-    const ServerInfoProcessor& serverInfoProcessor;
-    int _limit = 100;
-};
 
 class WarningTextLabel : public QLabel {
 public:
@@ -38,6 +23,12 @@ class MediaScrollArea : public QScrollArea {
     Q_OBJECT
 public:
     MediaScrollArea(QWidget* parent = nullptr);
+    int count() const;
+    void clear();
+    const std::vector<QUrl>& mediaUrls() const;
+signals:
+    void addedMedia();
+    void removedMedia();
 public slots:
     void addImages(QStringList list);
     void onRemove(int index);
@@ -45,10 +36,31 @@ private:
     void setupUi();
 private:
     QWidget* pWidget;
+    std::vector<QUrl> url_list;
     std::vector<MediaLabel*> label_list;
     QHBoxLayout* pLayout;
     int _maxDim;
 };
+
+class ChatTextEdit : public STextEdit {
+    Q_OBJECT
+public:
+    ChatTextEdit(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& combo, MediaScrollArea& mediaArea);
+    void setCharacterLimit(int limit);
+signals:
+    void messageCreated(const QString& name, const QString& message);
+    void mediaMessageCreated(const QString& name, const std::vector<QUrl>& list);
+protected:
+    void keyPressEvent(QKeyEvent* event) override;
+private:
+    void sendMessage();
+    void sendMedia();
+private:
+    const ServerInfoProcessor& serverInfoProcessor;
+    MediaScrollArea& mediaArea;
+    int _limit = 100;
+};
+
 class ChatMessageBar : public QWidget {
 public:
     ChatMessageBar(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0 ,KeywordCombo& keywordCombo);

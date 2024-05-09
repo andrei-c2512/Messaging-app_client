@@ -1,12 +1,14 @@
 #include "ServerInfoProcessor.h"
+#include "MessageHandlingBase.h"
 
+using namespace MessageSeparators;
 
 ServerInfoProcessor::ServerInfoProcessor(QObject* object)
-    :UserInfo(object)
+    :UserInfo(object) , _socket(new QTcpSocket(this)) , pMediaCache(new MediaCache(this)) , pMediaUploader(new MediaUploader(this , *_socket))
 {
     loggedIn = false;
     userInfoReceived = false;
-    _socket = new QTcpSocket(this);
+
     connect(_socket , &QTcpSocket::readyRead , this , &ServerInfoProcessor::onReadyRead);
     connect(_socket , &QTcpSocket::connected , this , [=](){
         qDebug() << "Connected to server";
@@ -178,6 +180,16 @@ void ServerInfoProcessor::addPeopleToGroup(int chatId , std::vector<int> idList)
     _socket->flush();
 } 
 
+void ServerInfoProcessor::sendMedia(QByteArray fileName, QByteArray media)
+{
+    QByteArray cmdNum = QByteArray::number((int)RequestToServer::MediaChunk);
+    QByteArray cmd;
+    cmd.reserve(cmdNum.size() + 3 + fileName.size() + media.size());
+    cmd.append(cmdNum).append('(').append(std::move(fileName)).append(',').append(std::move(media)).append(')');
+
+    _socket->write(cmd);
+    _socket->flush();
+}
 
 void ServerInfoProcessor::onReadyRead()
 {
@@ -325,6 +337,12 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
             case InfoFromServer::FriendStatus:
                 end = processFriendStatus(message, start);
                 break;
+            case InfoFromServer::UploadId:
+                end = processNewUploadId(message, start);
+                break;
+            case InfoFromServer::ChunkAccepted:
+                end = processChunkStatus(message, start);
+                break;
             default:
                 qDebug() << "Received unkown message";
                 break;
@@ -341,6 +359,16 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
     return end;
 }
 
+int ServerInfoProcessor::processChunkStatus(const QString& str, int start)
+{
+    int statusPos = str.indexOf(chunk_acceptedSep, start) + chunk_acceptedSep.length();
+    bool accepted = str[statusPos + 1] == 't';
+
+    if(accepted)
+        pMediaUploader->nextChunk();
+
+    return str.indexOf(commandEnd, statusPos) + commandEnd.length();
+}
 int ServerInfoProcessor::processNewGroupMembers(const QString& str, int start)
 {
     int chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
@@ -360,6 +388,15 @@ int ServerInfoProcessor::processNewGroupMembers(const QString& str, int start)
     }
 
     return str.indexOf(commandEnd, idListPos) + commandEnd.length();
+}
+
+int ServerInfoProcessor::processNewUploadId(const QString& str, int start)
+{
+    int idPos = str.indexOf(chunk_idSep, start) + chunk_idSep.length();
+    QString id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
+
+    pMediaUploader->nextMedia(id);
+    return str.indexOf(commandEnd, idPos) + commandEnd.length();
 }
 
 int ServerInfoProcessor::processNewChatName(const QString& str, int start)
@@ -1086,3 +1123,13 @@ void ServerInfoProcessor::requestDataOfWaitingUsers()
 
 const QTcpSocket& ServerInfoProcessor::socket() const { return *_socket;}
 std::vector<ContactInfo*>& ServerInfoProcessor::searchedForUsers() noexcept { return _searchedForUsers; }
+
+QImage ServerInfoProcessor::image(const QString& fileName)
+{
+    return (pMediaCache->provideImage(fileName));
+}
+void ServerInfoProcessor::addImage(const QUrl& url)
+{
+    pMediaUploader->addMediaToQueue(url);
+}
+bool ServerInfoProcessor::fileExists(const QString& fileName) { return pMediaCache->fileExists(fileName); }

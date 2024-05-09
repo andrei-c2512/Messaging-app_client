@@ -1,5 +1,8 @@
 #include "UserInfo.h"
 
+
+const QString MessageInfo::imageSign = "url::";
+
 //for MessageInfo
 MessageInfo::MessageInfo(QObject* parent) : QObject(parent) {}
 MessageInfo::MessageInfo(QObject* parent , QString name0 , QString text0 , QString timestamp0)
@@ -87,15 +90,27 @@ MessageInfo* ChatInfo::addMessageToQueue( QString name , QString message)
     return _queue.emplace_back(m);
 }
 
+MessageInfo* ChatInfo::addMessageToQueue(QString name, QUrl url)
+{
+    MessageInfo* m = new MessageInfo(this);
+    m->setTimestamp(QDateTime::currentDateTime());
+    m->setName(std::move(name));
+    m->setText(MessageInfo::imageSign + url.fileName());
 
+    emit newMessageInQueue(*m, _id);
+    return _queue.emplace_back(m);
+}
 const std::vector<MessageInfo*> ChatInfo::lastNMessages(int start , int n) const
 {
-    std::vector<MessageInfo*> list;
-    n = std::max(0 , (int)_history.size() - start - n);
-
-    for(int i = (int)_history.size() - start - 1 ; i  >= n ; i--)
-        list.emplace_back(_history[i]);
-    return list;
+    if (int(_history.size()) - start - n - 1 < 0)
+    {
+        if ((int)_history.size() - start - 1 < 0)
+            return {};
+        else
+            return { _history.begin(),  _history.end() - start - 1 };
+    }
+    else
+        return { _history.end() - start - n - 1,  _history.end() - start - 1};
 }
 
 const std::vector<MessageInfo*> ChatInfo::lastNMessages(int n) const
@@ -103,12 +118,7 @@ const std::vector<MessageInfo*> ChatInfo::lastNMessages(int n) const
     if(_history.size() <= n)
         return _history;
     else
-    {
-        std::vector<MessageInfo*> list;
-        for(int i = _history.size() - 1 ; i >= _history.size() - n; i--)
-            list.emplace_back(_history[i]);
-        return list;
-    }
+        return { _history.end() - n - 1  , _history.end() };
 }
 MessageInfo* ChatInfo::addWaitingMessage( QString name , QString message)
 {
@@ -624,6 +634,8 @@ std::vector<QString> UserInfo::namesForContacts(std::vector<int> idList) const
            assert(c != nullptr);
            nameList.emplace_back(c->name());
        }
+       else
+           nameList.emplace_back(_name);
     }
     nameList.shrink_to_fit();
     return nameList;
