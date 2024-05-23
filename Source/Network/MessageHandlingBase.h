@@ -17,7 +17,8 @@ enum class RequestToServer{
     RemoveFromGroup,
     AddPeopleToTheChat,
     MediaUploadId,
-    MediaChunk
+    MediaChunk,
+    Invalid
 };
 
 enum class InfoFromServer {

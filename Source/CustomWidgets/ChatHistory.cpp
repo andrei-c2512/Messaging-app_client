@@ -344,7 +344,7 @@ void ChatHistory::addRecord(MessageInfo& message)
 
     recordList.emplace_back(record);
     //pHistoryLayout->insertWidget(pHistoryLayout->count() - 1, record);
-    pHistoryLayout->addWidget(record);
+    pHistoryLayout->insertWidget(pHistoryLayout->count() - 1, record);
     if(moveToBottom)
         pScrollArea->moveScrollBarToBottom();
 }
