@@ -70,7 +70,7 @@ public slots:
 
     //this is for images that are already in the cache
     QImage image(const QString& fileName);
-    void addImage(const QUrl& url);
+    void addImage(const QUrl& url , int chatId , std::vector<int> memberList);
     bool fileExists(const QString& fileName);
 private slots:
     void attemptConnection();
@@ -126,6 +126,7 @@ private:
     int processFriendStatus(const QString& str, int start);
     int processNewUploadId(const QString& str, int start);
     int processChunkStatus(const QString& str, int start);
+    int processUploadName(const QString& str, int start);
 
     static std::vector<int> extractIntsFromArr(const QString& str);
     void requestDataOfUnknownUsers();

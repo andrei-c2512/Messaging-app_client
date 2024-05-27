@@ -15,10 +15,10 @@ ChatRecord::ChatRecord(QWidget* parent) : QWidget(parent) {
     setupUi(false);
 }
 
-ChatRecord::ChatRecord(QWidget* parent, MessageInfo* pInfo0, const std::vector<QString>& memberNames, bool waitingForResponse)
+ChatRecord::ChatRecord(QWidget* parent, MessageInfo* pInfo0, const std::vector<QString>& memberNames, ServerInfoProcessor& processor, bool waitingForResponse)
 {
     setupUi(waitingForResponse);
-    setInfo(pInfo0, memberNames);
+    setInfo(pInfo0, memberNames , processor);
     connect(pInfo0, &MessageInfo::outOfQueue, this, [=]() {
         pMainLayout->setStretch(0, 0);
         });
@@ -79,27 +79,28 @@ void ChatRecord::setStatus(bool isFirstMessageOfSequence)
     pProfilePicture->setVisible(isFirstMessageOfSequence);
 }
 
-void ChatRecord::setInfo(MessageInfo* info, const std::vector<QString>& memberNames)
+void ChatRecord::setInfo(MessageInfo* info, const std::vector<QString>& memberNames, ServerInfoProcessor& processor)
 {
     pInfo = info;
     connect(info, &ChatInfo::destroyed, this, [=]() {
         pInfo = &NullInfo::instance().nullMessage();
         });
 
-    applyTags(memberNames);
-    pName->setText(info->name());
+    QString text = info->text();
 
-    //if (now.year() == date.year() && now.month() == date.month())
-    //{
-    //    if (now.day() == date.day())
-    //        pTime->setText("Today at " + info->timestamp().time().toString());
-    //    else if (now.day() - date.day() == 1)
-    //        pTime->setText("Yesterday at " + info->timestamp().time().toString());
-    //    else
-    //        pTime->setText(pInfo->timestamp().toString());
-    //}
-    //else
-    //    pTime->setText(pInfo->timestamp().toString());
+    if (text.startsWith(MessageInfo::imageSign))
+    {
+        QString fileName = text.sliced(MessageInfo::imageSign.length());
+
+        pMessage->setText("");
+        pMessage->insertImage(processor.image(fileName));
+        pName->setText(info->name());
+    }
+    else
+    {
+        applyTags(memberNames);
+        pName->setText(info->name());
+    }
 
     pTime->setText(dateToString(pInfo->timestamp()));
 }
@@ -119,30 +120,6 @@ QString ChatRecord::dateToString(QDateTime timestamp)
     else
         return timestamp.toString();
 }
-
-void ChatRecord::setInfoWithMedia(MessageInfo* info, QUrl url){
-    pInfo = info;
-    connect(info, &ChatInfo::destroyed, this, [=]() {
-        pInfo = &NullInfo::instance().nullMessage();
-        });
-    pMessage->insertImage(url);
-    pName->setText(info->name());
-
-    //if (now.year() == date.year() && now.month() == date.month())
-    //{
-    //    if (now.day() == date.day())
-    //        pTime->setText("Today at " + info->timestamp().time().toString());
-    //    else if (now.day() - date.day() == 1)
-    //        pTime->setText("Yesterday at " + info->timestamp().time().toString());
-    //    else
-    //        pTime->setText(pInfo->timestamp().toString());
-    //}
-    //else
-    //    pTime->setText(pInfo->timestamp().toString());
-
-    pTime->setText(dateToString(pInfo->timestamp()));
-}
-
 
 void ChatRecord::applyTags(const std::vector<QString>& memberNames)
 {
@@ -285,7 +262,7 @@ void ChatHistory::addNRecords(int n)
 
     for (int i = n - 1; i >= 0; i--)
     {
-        newRecords[i] = new ChatRecord(nullptr, &NullInfo::instance().nullMessage(), memberNames);
+        newRecords[i] = new ChatRecord(nullptr, &NullInfo::instance().nullMessage(), memberNames , processor);
         pHistoryLayout->insertWidget(0, newRecords[i]);
     }  
     recordList.insert(recordList.begin(),  newRecords.begin(), newRecords.end());
@@ -322,7 +299,7 @@ QSize ChatHistory::minimumSizeHint() const {
 void ChatHistory::addRecord(const QString& name, const QString& message)
 {
     MessageInfo* messageInfo = pInfo->addMessageToQueue(name, message);
-    ChatRecord* record = new ChatRecord(nullptr, messageInfo , memberNames);
+    ChatRecord* record = new ChatRecord(nullptr, messageInfo , memberNames , processor);
 
     setupMessage(*messageInfo, record , recordList.back());
 
@@ -332,7 +309,7 @@ void ChatHistory::addRecord(const QString& name, const QString& message)
 }
 void ChatHistory::addRecord(MessageInfo& message)
 {
-    ChatRecord* record = new ChatRecord(nullptr, &message, memberNames);
+    ChatRecord* record = new ChatRecord(nullptr, &message, memberNames , processor);
 
     setupMessage(message, record , recordList.back());
 
@@ -352,7 +329,7 @@ void ChatHistory::addRecord(MessageInfo& message)
 void ChatHistory::addMediaRecord(const QString& name, const QUrl& url)
 {
     MessageInfo* messageInfo = pInfo->addMessageToQueue(name, url);
-    ChatRecord* record = new ChatRecord(nullptr, messageInfo, memberNames);
+    ChatRecord* record = new ChatRecord(nullptr, messageInfo, memberNames , processor);
 
     setupMessage(*messageInfo, record, recordList.back());
 
@@ -365,9 +342,9 @@ void ChatHistory::addMediaRecords(const QString& name, const std::vector<QUrl>& 
     for (const QUrl& url : urls)
     {
         MessageInfo* messageInfo = pInfo->addMessageToQueue(name, url);
-        ChatRecord* record = new ChatRecord(nullptr, messageInfo, memberNames);
+        ChatRecord* record = new ChatRecord(nullptr, messageInfo, memberNames , processor);
 
-        processor.addImage(url);
+        processor.addImage(url , pInfo->id() , pInfo->members());
         setupMessage(*messageInfo, record, recordList.back());
 
         recordList.emplace_back(record);
@@ -411,12 +388,12 @@ void ChatHistory::setChatInfo(ChatInfo* info) {
         sequence++;
     }
     lastVal = val;
-    recordList[0]->setInfo(infoList[0] , memberNames);
+    recordList[0]->setInfo(infoList[0] , memberNames , processor);
     recordList[0]->setStatus(false);
     for (int i = 1; i < infoList.size(); i++)
     {
         setupMessage(*infoList[i], recordList[i], recordList[i - 1]);
-        recordList[i]->setInfo(infoList[i] , memberNames);
+        recordList[i]->setInfo(infoList[i] , memberNames , processor);
     }
     if (messagesLoaded != infoList.size())
         recordList.back()->setStatus(true);
@@ -428,7 +405,7 @@ void ChatHistory::onLoadMore()
     for (int i = int(infoList.size()) - 1; i >= 0; i--)
     {
         setupMessage(*infoList[i], recordList[i] , recordList[i + 1]);
-        recordList[i]->setInfo(infoList[i] , memberNames);
+        recordList[i]->setInfo(infoList[i] , memberNames , processor);
     }
     if (infoList.size() != 0)
     {
@@ -463,7 +440,7 @@ void ChatHistory::setupMessage(MessageInfo& info, ChatRecord* record ,ChatRecord
         QMargins margins = QMargins(0, 30, 0, 0);
         previous->setContentsMargins(margins);
     }
-    record->setInfo(&info , memberNames);
+    record->setInfo(&info , memberNames , processor);
 }
 
 void ChatHistory::empty()

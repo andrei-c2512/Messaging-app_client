@@ -9,6 +9,7 @@
 #include "Tools.h"
 #include <QFlags>
 #include <QUrl>
+#include <queue>
 
 class MessageInfo : public QObject{
     Q_OBJECT
@@ -137,8 +138,10 @@ public:
     bool operator==(const ChatInfo* rhs) const;
     bool operator==(ChatInfo* rhs);
 
+    void mediaMessageUploaded(QString fileName);
 signals:
     void newMessageAdded( MessageInfo& m );
+    //this signal is connected to the function that sends message info to the server
     void newMessageInQueue(const MessageInfo& info , int chatId);
     void nameChanged(const QString& name);
     void gotBlocked(bool b);
@@ -150,6 +153,8 @@ signals:
 private:
     std::vector<MessageInfo*> _history;
     std::vector<MessageInfo*> _queue;
+    std::queue<MessageInfo*> _mediaMessageQueue;
+
     std::vector<int> _members;
     std::vector<int> _readOnlyMembers;
     int _adminId;

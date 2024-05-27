@@ -263,6 +263,36 @@ public:
         }
         return -1;
     }
+
+    static QByteArray makeList(char beg, char end, char sep, std::vector<QByteArray> args)
+    {
+        QByteArray result = "";
+        result += beg;
+        for (QByteArray& arg : args)
+            result += arg + sep;
+
+        result.back() = end;
+        return result;
+    }
+    static QByteArray intArrToByteArr(char beg, char end , int sep , std::vector<int> arr)
+    {
+        QByteArray result = "";
+        result += beg;
+        for (const int& nr : arr)
+            result += QByteArray::number(nr) + sep;
+
+        result.back() = end;
+        return result;
+    }
+    static QByteArray intArrToByteArr( int sep, std::vector<int> arr)
+    {
+        QByteArray result = "";
+        for (const int& nr : arr)
+            result += QByteArray::number(nr) + sep;
+
+        result.removeLast();
+        return result;
+    }
 };
 
 #endif // TOOLS_H

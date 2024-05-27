@@ -19,9 +19,8 @@ class ChatRecord : public QWidget {
     Q_OBJECT
 public:
     ChatRecord(QWidget* parent = nullptr);
-    ChatRecord(QWidget* parent, MessageInfo* pInfo0, const std::vector<QString>& memberNames, bool waitingForResponse = false);
-    void setInfo(MessageInfo* info, const std::vector<QString>& memberNames);
-    void setInfoWithMedia(MessageInfo* info , QUrl url);
+    ChatRecord(QWidget* parent, MessageInfo* pInfo0, const std::vector<QString>& memberNames, ServerInfoProcessor& processor , bool waitingForResponse = false);
+    void setInfo(MessageInfo* info, const std::vector<QString>& memberNames , ServerInfoProcessor& processor);
     void setMessage(const QString& str);
     void setName(const QString& name);
     QString message() const;

@@ -29,6 +29,7 @@ public:
     using QTextEdit::setTextColor;
     void setVisible(bool visible ) override;
     void insertImage(QUrl url);
+    void insertImage(QImage image);
 private slots:
     void updateMaxHeight(const QSizeF& size);
 signals:

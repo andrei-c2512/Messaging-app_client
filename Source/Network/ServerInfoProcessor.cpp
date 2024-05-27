@@ -78,7 +78,6 @@ void ServerInfoProcessor::createPrivateChatWithFriend(int friendId)
     _socket->write(str.toUtf8());
     _socket->flush();
 }
-
 void ServerInfoProcessor::createGroupChat(std::vector<int> list)
 {
     QString str = QString::number((int)RequestToServer::CreateGroupChat) + '(' + QString::number(_id);
@@ -119,7 +118,6 @@ void ServerInfoProcessor::blockUser(int id)
     _socket->write(str.toUtf8());
     _socket->flush();
 }
-
 void ServerInfoProcessor::unblockUser(int id)
 {
     QString str = QString::number((int)RequestToServer::UnblockUser) + '(' + QString::number(_id) + ',' +
@@ -128,7 +126,6 @@ void ServerInfoProcessor::unblockUser(int id)
     _socket->write(str.toUtf8());
     _socket->flush();
 }
-
 void ServerInfoProcessor::removeFromGroup(int chatId, int userId)
 {
     QString str = QString::number((int)RequestToServer::RemoveFromGroup) + '(' + QString::number(chatId) + ',' + 
@@ -137,7 +134,6 @@ void ServerInfoProcessor::removeFromGroup(int chatId, int userId)
     _socket->write(str.toUtf8());
     _socket->flush();
 }
-
 void ServerInfoProcessor::getInfoForUsers(std::vector<int> list)
 {
     //CmdNum(id1 , id2 , .... , idn , userId)
@@ -149,7 +145,6 @@ void ServerInfoProcessor::getInfoForUsers(std::vector<int> list)
     _socket->write(str.toUtf8());
     _socket->flush();
 }
-
 void ServerInfoProcessor::updateChatName(int chatId, QString newName)
 {
     QString str = QString::number((int)RequestToServer::UpdateChatName) + " (" +
@@ -158,7 +153,6 @@ void ServerInfoProcessor::updateChatName(int chatId, QString newName)
     _socket->write(str.toUtf8());
     _socket->flush();
 }
-
 void ServerInfoProcessor::leaveFromGroup(int chatId)
 {
     QString str = QString::number((int)RequestToServer::RemoveFromGroup) + '(' + QString::number(chatId) + ',' +
@@ -167,7 +161,6 @@ void ServerInfoProcessor::leaveFromGroup(int chatId)
     _socket->write(str.toUtf8());
     _socket->flush();
 }
-
 void ServerInfoProcessor::addPeopleToGroup(int chatId , std::vector<int> idList)
 {
     QString str = QString::number((int)RequestToServer::AddPeopleToTheChat) + '(';
@@ -179,7 +172,6 @@ void ServerInfoProcessor::addPeopleToGroup(int chatId , std::vector<int> idList)
     _socket->write(str.toUtf8());
     _socket->flush();
 } 
-
 void ServerInfoProcessor::sendMedia(QByteArray fileName, QByteArray media)
 {
     QByteArray cmdNum = QByteArray::number((int)RequestToServer::MediaChunk);
@@ -204,8 +196,6 @@ void ServerInfoProcessor::onReadyRead()
         lastPos = pos;
         pos = processCommand(message , pos);
     }
-    showChatInDebug();
-
 }
 int ServerInfoProcessor::processCommand(const QString& message , int start)
 {
@@ -343,6 +333,9 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
             case InfoFromServer::ChunkAccepted:
                 end = processChunkStatus(message, start);
                 break;
+            case InfoFromServer::FileName:
+                end = processUploadName(message, start);
+                break;
             default:
                 qDebug() << "Received unkown message";
                 break;
@@ -361,7 +354,7 @@ int ServerInfoProcessor::processCommand(const QString& message , int start)
 
 int ServerInfoProcessor::processChunkStatus(const QString& str, int start)
 {
-    int statusPos = str.indexOf(chunk_acceptedSep, start) + chunk_acceptedSep.length();
+    int statusPos = str.indexOf(upload_acceptedSep, start) + upload_acceptedSep.length();
     bool accepted = str[statusPos + 1] == 't';
 
     if(accepted)
@@ -389,16 +382,14 @@ int ServerInfoProcessor::processNewGroupMembers(const QString& str, int start)
 
     return str.indexOf(commandEnd, idListPos) + commandEnd.length();
 }
-
 int ServerInfoProcessor::processNewUploadId(const QString& str, int start)
 {
-    int idPos = str.indexOf(chunk_idSep, start) + chunk_idSep.length();
+    int idPos = str.indexOf(upload_idSep, start) + upload_idSep.length();
     QString id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
 
     pMediaUploader->nextMedia(id);
     return str.indexOf(commandEnd, idPos) + commandEnd.length();
 }
-
 int ServerInfoProcessor::processNewChatName(const QString& str, int start)
 {
     int idPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
@@ -413,7 +404,6 @@ int ServerInfoProcessor::processNewChatName(const QString& str, int start)
 
     return str.indexOf(commandEnd, namePos) + commandEnd.length();
 }
-
 int ServerInfoProcessor::processUserUnblocked(const QString& str, int start)
 {
     int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
@@ -448,7 +438,6 @@ int ServerInfoProcessor::processUserUnblockedYou(const QString& str, int start)
 
     return str.indexOf(commandEnd, idPos) + commandEnd.length();
 }
-
 int ServerInfoProcessor::processGroupMemberRemoval(const QString& str, int start)
 {
     int chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
@@ -464,7 +453,6 @@ int ServerInfoProcessor::processGroupMemberRemoval(const QString& str, int start
 
     return str.indexOf(commandEnd, contactId) + commandEnd.length();
 }
-
 int ServerInfoProcessor::processListOfStrangers(const QString& str, int start)
 {
     std::function<void(ContactInfo*)> verify;
@@ -537,7 +525,6 @@ int ServerInfoProcessor::processListOfStrangers(const QString& str, int start)
     }
     return str.indexOf(commandEnd, hasRequestPos);
 }
-
 int ServerInfoProcessor::processPersonBlocked(const QString& str, int start)
 {
     int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
@@ -550,7 +537,6 @@ int ServerInfoProcessor::processPersonBlocked(const QString& str, int start)
 
     return str.indexOf(commandEnd, start) + commandEnd.length();
 }
-
 int ServerInfoProcessor::processGettingBlocked(const QString& str, int start)
 {
     int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
@@ -568,9 +554,6 @@ int ServerInfoProcessor::processGettingBlocked(const QString& str, int start)
 
     return str.indexOf(commandEnd, start) + commandEnd.length();
 }
-
-
-
 int ServerInfoProcessor::processNewChat(const QString& str, int start)
 {
     int idPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
@@ -710,7 +693,6 @@ int ServerInfoProcessor::processSignInInfo(const QString& str , int start)
     qDebug() << "User id: " << _id;
     return str.indexOf(commandEnd , start) + commandEnd.length();
 }
-
 int ServerInfoProcessor::processSearchedForList(const QString& str , int start)
 {
     std::vector<ContactInfo*> vec;
@@ -763,7 +745,6 @@ int ServerInfoProcessor::processSearchedForList(const QString& str , int start)
     }
     return str.indexOf(commandEnd , hasRequestPos);
 }
-
 int ServerInfoProcessor::processNewMessageInfo(const QString& str, int start)
 {
     // how the data looks like
@@ -796,8 +777,6 @@ int ServerInfoProcessor::processNewMessageInfo(const QString& str, int start)
         return str.indexOf(commandEnd , chatIdBegin) + commandEnd.length();
     }
 }
-
-
 int ServerInfoProcessor::processChatListInfo(const QString& str , int start)
 {
     int lastPos = -1;
@@ -821,8 +800,6 @@ int ServerInfoProcessor::processChatListInfo(const QString& str , int start)
     emit newChatData();
     return str.indexOf(commandEnd , pos) + commandEnd.length();
 }
-
-
 int ServerInfoProcessor::processContactInfo(const QString& str , int start)
 {
     int ownFriendListPos = str.indexOf(contactSeps[0] , start) + contactSeps[0].length();
@@ -854,7 +831,6 @@ int ServerInfoProcessor::processContactInfo(const QString& str , int start)
         });
     return endPos + commandEnd.length();
 }
-
 int ServerInfoProcessor::processNecessaryContacts(const QString& str, int start)
 {
     //beware , you did not intialize the friend id list
@@ -911,7 +887,6 @@ int ServerInfoProcessor::processNecessaryContacts(const QString& str, int start)
     }
     return end;
 }
-
 std::vector<ContactInfo*>  ServerInfoProcessor::processContactList(const QString& str , int start , int end)
 {
     //beware , you did not intialize the friend id list
@@ -937,7 +912,6 @@ std::vector<ContactInfo*>  ServerInfoProcessor::processContactList(const QString
     }
     return vec;
 }
-
 int ServerInfoProcessor::processNewFriendInfo(const QString& str , int start)
 {
     int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
@@ -957,7 +931,6 @@ int ServerInfoProcessor::processNewFriendInfo(const QString& str , int start)
     UserInfo::addFriend(contact);
     return str.indexOf(commandEnd , friendListPos) + commandEnd.length();
 }
-
 int ServerInfoProcessor::processNewAdmin(const QString& str, int start)
 {
     int chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
@@ -971,8 +944,6 @@ int ServerInfoProcessor::processNewAdmin(const QString& str, int start)
 
     return str.indexOf(commandEnd, contactIdPos) + commandEnd.length();
 }
-
-
 std::vector<MessageInfo*> ServerInfoProcessor::extractHistoryFromChat(const QString& str , int start)
 {
     /* example : {"(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")","(Leo,\"Ce te pisi atata\",\"2021-04-05 00:00:00\")"}
@@ -991,7 +962,6 @@ std::vector<MessageInfo*> ServerInfoProcessor::extractHistoryFromChat(const QStr
     }
     return history;
 }
-
 std::pair<MessageInfo*, int> ServerInfoProcessor::processMessageInfo(const QString& str , int start)
 {
     /* example of a message: "(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")"
@@ -1065,6 +1035,24 @@ int ServerInfoProcessor::processFriendStatus(const QString& str, int start)
     return str.indexOf(commandEnd, onlinePos) + commandEnd.length();
 }
 
+int ServerInfoProcessor::processUploadName(const QString& str, int start)
+{
+    int idPos = str.indexOf(upload_idSep, start) + upload_idSep.length();
+    int uploadNamePos = str.indexOf(upload_nameSep, idPos) + upload_nameSep.length();
+
+    int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
+    QString name = str.mid(uploadNamePos + 1, str.indexOf('"', uploadNamePos + 1) - uploadNamePos - 1);
+
+    UploadData media = pMediaUploader->readyMedia(id);
+    ChatInfo* info = chatById(media.chatId);
+
+    if (info != nullptr)
+    {
+        pMediaCache->addImage(media.url , name);
+        info->mediaMessageUploaded(name);
+    }
+    return str.indexOf(commandEnd, uploadNamePos) + commandEnd.length();
+}
 
 std::vector<int> ServerInfoProcessor::extractIntsFromArr(const QString& str)
 {
@@ -1128,8 +1116,8 @@ QImage ServerInfoProcessor::image(const QString& fileName)
 {
     return (pMediaCache->provideImage(fileName));
 }
-void ServerInfoProcessor::addImage(const QUrl& url)
+void ServerInfoProcessor::addImage(const QUrl& url, int chatId, std::vector<int> memberList)
 {
-    pMediaUploader->addMediaToQueue(url);
+    pMediaUploader->addMediaToQueue(url, chatId , _id , memberList);
 }
 bool ServerInfoProcessor::fileExists(const QString& fileName) { return pMediaCache->fileExists(fileName); }

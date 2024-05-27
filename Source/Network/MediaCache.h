@@ -8,15 +8,18 @@
 #include <QFileInfo>
 #include <QImageReader>
 #include <QImageWriter>
+#include "MessageHandlingBase.h"
 
 class MediaCache : public QObject {
 public:
 	MediaCache(QObject* parent = nullptr);
 	QImage provideImage(const QString& name);
-	QString addImage(const QUrl& url);
+	void addImage(const QUrl& url , const QString& name);
 	bool fileExists(const QString& name);
 	static QString numToString(int num);
 	static QString constructFileName(int num , int extension);
+private:
+	static QString extractExtension(const QString& fileName);
 private:
 	std::vector<QImage> cache;
 	QDir cacheDir;

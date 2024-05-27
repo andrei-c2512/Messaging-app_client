@@ -90,15 +90,26 @@ MessageInfo* ChatInfo::addMessageToQueue( QString name , QString message)
     return _queue.emplace_back(m);
 }
 
+void ChatInfo::mediaMessageUploaded(QString fileName)
+{
+    MessageInfo* m = _mediaMessageQueue.front();
+    _mediaMessageQueue.pop();
+
+    m->setText(MessageInfo::imageSign + fileName);
+
+    emit newMessageInQueue(*m, _id);
+}
+
 MessageInfo* ChatInfo::addMessageToQueue(QString name, QUrl url)
 {
     MessageInfo* m = new MessageInfo(this);
     m->setTimestamp(QDateTime::currentDateTime());
     m->setName(std::move(name));
-    m->setText(MessageInfo::imageSign + url.fileName());
+    m->setText(MessageInfo::imageSign + "%");
 
-    emit newMessageInQueue(*m, _id);
-    return _queue.emplace_back(m);
+    //emit newMessageInQueue(*m, _id);
+    
+    return _mediaMessageQueue.emplace(m);
 }
 const std::vector<MessageInfo*> ChatInfo::lastNMessages(int start , int n) const
 {
@@ -404,10 +415,10 @@ void UserInfo::showChatInDebug() const noexcept
     //    qDebug() << "User: " << info->name() << "   Id: " << info->id();
     //    qDebug() << "IsOnline: " << info->online() << ' ' << "LastSeen: "  << info->lastSeen();
     //}
-    for(const ChatInfo* chat : _chatList)
-    {
-        qDebug() << "Chat id: " << chat->id();
-    }
+    //for(const ChatInfo* chat : _chatList)
+    //{
+    //    qDebug() << "Chat id: " << chat->id();
+    //}
 }
 ChatInfo& UserInfo::getChatById(int id)
 {

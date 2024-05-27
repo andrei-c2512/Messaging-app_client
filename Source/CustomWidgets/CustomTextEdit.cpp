@@ -51,6 +51,17 @@ void CustomTextEdit::insertImage(QUrl url)
     format.setName(url.fileName());
     cursor.insertImage(format);
 }
+void CustomTextEdit::insertImage(QImage image)
+{
+    QTextDocument* doc = document();
+    doc->addResource(QTextDocument::ImageResource, QUrl("image"), QVariant(image));
+    QTextCursor cursor(textCursor());
+    QTextImageFormat format;
+    format.setWidth(image.width());
+    format.setHeight(image.height());
+    format.setName("image");
+    cursor.insertImage(format);
+}
 
 QSize CustomTextEdit::sizeHint() const
 {

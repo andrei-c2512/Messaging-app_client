@@ -12,8 +12,16 @@ MediaCache::MediaCache(QObject* parent) : QObject(parent)
 
 }
 QImage MediaCache::provideImage(const QString& name) {
-	QImage img = QImageReader(cacheDir.absolutePath() + '/' + name).read();
-	return img;
+	QFile file(cacheDir.path() + '/' + name);
+	if (file.open(QIODevice::ReadOnly) == false)
+		return QImage();
+	else
+	{
+		QByteArray arr = file.readAll();
+		file.close();
+		QImage img = QImage::fromData(std::move(arr), extractExtension(name).toUtf8());
+		return img;
+	}
 }
 
 
@@ -37,27 +45,48 @@ bool MediaCache::fileExists(const QString& name)
 	return QFile::exists(filePath);
 }
 
-QString MediaCache::addImage(const QUrl& url)
+QString MediaCache::extractExtension(const QString& fileName)
+{
+	FileExtension extension = (FileExtension)fileName.last(2).toInt();
+	switch (extension)
+	{
+	case FileExtension::PNG:
+		return "png";
+	case FileExtension::JPG:
+		return "jpg";
+	default:
+		return "";
+	}
+}
+
+
+void MediaCache::addImage(const QUrl& url, const QString& name)
 {
 	QFileInfo fileInfo(url.toString());
 	
 	FileExtension extension = (FileExtension)Converters::suffixType(fileInfo.suffix());
 
-	if (extension == FileExtension::INVALID)
-		return "";
-	else
+	if (extension != FileExtension::INVALID)
 	{
-		QString fileName = constructFileName(_count, (int)extension);
-		QString fileAbsolutePath = cacheDir.absolutePath() + fileName;
+		QString fileAbsolutePath = cacheDir.absolutePath() + "/" + name;
 
-		QFile file(fileAbsolutePath);
-		if (file.open(QIODevice::ReadOnly))
-			qDebug() << "!New cache image created";
+		QFile file = QFile(url.toString());
+		if (file.open(QIODevice::ReadOnly) == false)
+		{
+			qDebug() << "Could not open file int media cache: " << file.errorString();
+		}
+
+		QByteArray data = file.readAll();
+
 		file.close();
 
-		QImage image = QImageReader(url.toString()).read();
-		QImageWriter writer(fileAbsolutePath);
-		writer.write(image);
-		return fileName;
+		file.setFileName(fileAbsolutePath);
+		if (file.open(QIODevice::WriteOnly))
+		{
+			qDebug() << "!New cache image created";
+
+			qDebug() << "Bytes written " << file.write(std::move(data));
+		}
+		file.close();
 	}
 }

@@ -1,3 +1,4 @@
+#pragma once
 #include <QTcpSocket>
 
 enum class RequestToServer{
@@ -18,6 +19,7 @@ enum class RequestToServer{
     AddPeopleToTheChat,
     MediaUploadId,
     MediaChunk,
+    
     Invalid
 };
 
@@ -43,7 +45,8 @@ enum class InfoFromServer {
     NewAdmin,
     FriendStatus,
     UploadId,
-    ChunkAccepted
+    ChunkAccepted,
+    FileName
 };
 
 enum class FileExtension {
@@ -92,8 +95,11 @@ namespace MessageSeparators {
     static const QString chat_removedSep = "\"" + chatPrefix + "Removed\":";
     static const QString chat_newMembersSep = "\"" + chatPrefix + "NewMembers\":";
 
-    static const QString chunk_idSep = "\"chunkId\":";
-    static const QString chunk_acceptedSep = "\"chunkAccepted\":";
+    static const QString upload_idSep = "\"uploadId\":";
+    static const QString upload_acceptedSep = "\"uploadAccepted\":";
+    static const QString upload_nameSep = "\"uploadName\":";
+    static const QString upload_senderIdSep = "\"uploadsenderId\":";
+    static const QString upload_receiverListSep = "\"uploadReceiverList\":";
     //for user info
     static const QString userPrefix = "user";
 
