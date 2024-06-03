@@ -154,28 +154,28 @@ SocialPage::SocialPage(QWidget* parent ,ServerInfoProcessor& pInfoProcessor0 , C
     : Page(parent , pInfoProcessor0) , chatPage(page) , stackedWidget(stackedWidget0)
 {
     _searchType = SearchType::FriendList;
-    _currentList = &serverInfoProcessor.friendList();
+    _currentList = &serverInfoProcessor.storage().friendList();
     setupUi();
-    connect(&serverInfoProcessor , &ServerInfoProcessor::newFriend , this , [=](){
+    connect(&serverInfoProcessor.handler(), &ResponseHandler::newFriend, this, [=]() {
         if(_searchType == SearchType::FriendList)
         {
-            pList->setContactList(serverInfoProcessor.friendList() , serverInfoProcessor , chatPage, stackedWidget, SearchType::FriendList , pSearchBar->document()->isEmpty()) ;
+            pList->setContactList(serverInfoProcessor.storage().friendList() , serverInfoProcessor , chatPage, stackedWidget, SearchType::FriendList , pSearchBar->document()->isEmpty()) ;
         }
     });
-    connect(&serverInfoProcessor , &ServerInfoProcessor::newSearchData , this , [=](){
+    connect(&serverInfoProcessor.handler(), &ResponseHandler::newSearchData, this, [=]() {
         pList->stopWaiting();
-        pList->setContactList(serverInfoProcessor.searchedForUsers() , serverInfoProcessor , chatPage , stackedWidget, SearchType::AddFriend , pSearchBar->document()->isEmpty());
+        pList->setContactList(serverInfoProcessor.storage().searchedForList() , serverInfoProcessor , chatPage , stackedWidget, SearchType::AddFriend , pSearchBar->document()->isEmpty());
     });
-    connect(&serverInfoProcessor , &ServerInfoProcessor::newFriendRequest , this , [=](){
+    connect(&serverInfoProcessor.handler(), &ResponseHandler::newFriendRequest, this, [=]() {
         if(_searchType == SearchType::RequestList)
-        pList->setContactList(serverInfoProcessor.requestList() , serverInfoProcessor , chatPage , stackedWidget, SearchType::RequestList , pSearchBar->document()->isEmpty());
+        pList->setContactList(serverInfoProcessor.storage().requestList() , serverInfoProcessor , chatPage , stackedWidget, SearchType::RequestList , pSearchBar->document()->isEmpty());
     });
-    connect(&serverInfoProcessor, &ServerInfoProcessor::contactInfoLoaded, this, [=]() {
+    connect(&serverInfoProcessor.handler(), &ResponseHandler::contactInfoLoaded, this, [=]() {
 
-        if(serverInfoProcessor.blockedList().size()) //this will make it so that the meme widget doesn't play when logging in
-            pList->setContactList(serverInfoProcessor.blockedList(), serverInfoProcessor, chatPage, stackedWidget, SearchType::BlockedList, pSearchBar->document()->isEmpty());
-        pList->setContactList(serverInfoProcessor.requestList(), serverInfoProcessor, chatPage, stackedWidget, SearchType::RequestList, pSearchBar->document()->isEmpty());
-        pList->setContactList(serverInfoProcessor.friendList(), serverInfoProcessor, chatPage, stackedWidget, SearchType::FriendList, pSearchBar->document()->isEmpty());
+        if(serverInfoProcessor.storage().blockedList().size()) //this will make it so that the meme widget doesn't play when logging in
+            pList->setContactList(serverInfoProcessor.storage().blockedList(), serverInfoProcessor, chatPage, stackedWidget, SearchType::BlockedList, pSearchBar->document()->isEmpty());
+        pList->setContactList(serverInfoProcessor.storage().requestList(), serverInfoProcessor, chatPage, stackedWidget, SearchType::RequestList, pSearchBar->document()->isEmpty());
+        pList->setContactList(serverInfoProcessor.storage().friendList(), serverInfoProcessor, chatPage, stackedWidget, SearchType::FriendList, pSearchBar->document()->isEmpty());
     });
     pList->setContactList(*_currentList , serverInfoProcessor , chatPage, stackedWidget , SearchType::FriendList, pSearchBar->document()->isEmpty());
 }
@@ -191,16 +191,16 @@ void SocialPage::setSearchType(SearchType type)
     switch(_searchType)
     {
     case SearchType::FriendList:
-        _currentList = &serverInfoProcessor.friendList();
+        _currentList = &serverInfoProcessor.storage().friendList();
         break;
     case SearchType::RequestList:
-        _currentList = &serverInfoProcessor.requestList();
+        _currentList = &serverInfoProcessor.storage().requestList();
         break;
     case SearchType::AddFriend:
-        _currentList = &serverInfoProcessor.searchedForUsers();
+        _currentList = &serverInfoProcessor.storage().searchedForList();
         break;
     case SearchType::BlockedList:
-        _currentList = &serverInfoProcessor.blockedList();
+        _currentList = &serverInfoProcessor.storage().blockedList();
         break;
     }
 }
@@ -232,7 +232,7 @@ void SocialPage::search(const QString& str)
     {
         if(pSearchBar->toPlainText().length() >= 2)
         {
-            serverInfoProcessor.searchForPeople(str);
+            serverInfoProcessor.requestSender().searchForPeople(str);
             pList->waitForResults();
         }
     }

@@ -114,6 +114,8 @@ public:
     }
     static std::vector<int> extractIntsFromArr(const QString& str, int start = 0)
     {
+        if (str[start] == '"' && str[start + 1] == '"') return {};
+
         std::vector<int> memberList;
         QString nrStr;
         //it's necessary to put such a big variable because sometimes , message from server(like chat histories) can be HUGE
@@ -241,58 +243,25 @@ public:
         }
         return nullptr;
     }
-    static QPoint windowPos(const QWidget* widget)
-    {
-        QPoint pos;
-        while (widget->parent() != nullptr)
-        {
-            pos += widget->pos();
-            if (QWidget* w = qobject_cast<QWidget*>(widget->parent()))
-                widget = w;
-        }
-        return pos;
-    }
+    static QPoint windowPos(const QWidget* widget);
     //returns the position of the first string in the "searchedList" that has been found in the "str"
-    static int indexOf(const QString& str, const std::vector<QString>& searchedList, int start = 0)
-    {
-        for (const QString& elem : searchedList)
-        {
-            int pos = str.indexOf(elem, start);
-            if (pos != -1)
-                return pos;
-        }
-        return -1;
-    }
-
-    static QByteArray makeList(char beg, char end, char sep, std::vector<QByteArray> args)
-    {
-        QByteArray result = "";
-        result += beg;
-        for (QByteArray& arg : args)
-            result += arg + sep;
-
-        result.back() = end;
-        return result;
-    }
-    static QByteArray intArrToByteArr(char beg, char end , int sep , std::vector<int> arr)
-    {
-        QByteArray result = "";
-        result += beg;
-        for (const int& nr : arr)
-            result += QByteArray::number(nr) + sep;
-
-        result.back() = end;
-        return result;
-    }
-    static QByteArray intArrToByteArr( int sep, std::vector<int> arr)
-    {
-        QByteArray result = "";
-        for (const int& nr : arr)
-            result += QByteArray::number(nr) + sep;
-
-        result.removeLast();
-        return result;
-    }
+    static int indexOf(const QString& str, const std::vector<QString>& searchedList, int start = 0);
+    static QByteArray makeList(char beg, char end, char sep, std::vector<QByteArray> args);
+    static QByteArray intArrToByteArr(char beg, char end, int sep, std::vector<int> arr);
+    static QByteArray intArrToByteArr(int sep, std::vector<int> arr);
+    //extracts the parameters using its separator from the starting pos. It also sets the starting pos of the search
+    static QString extractParameterStr(const QString& message, const QString& separator, int start);
+    //extracts the parameters using its separator from the starting pos. It uses the last index of the last call of extractParameter
+    //its mechanism is something similar of strtok
+    static QString extractParameterStr(const QString& message, const QString& separator);
+    static bool extractParameterBool(const QString& message, const QString& separator , int start);
+    static bool extractParameterBool(const QString& message, const QString& separator);
+    static std::vector<int> extractParameterIntList(const QString& message, const QString& separator , int start);
+    static std::vector<int> extractParameterIntList(const QString& message, const QString& separator);
+    static int parameterPos(const QString& message, const QString& separator, int start);
+    static int parameterPos(const QString& message, const QString& separator);
+    static int lastPos();
+private:
+    static int _lastPos;
 };
-
 #endif // TOOLS_H

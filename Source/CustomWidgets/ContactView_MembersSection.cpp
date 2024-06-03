@@ -152,19 +152,19 @@ void ContactView_MembersSection::connectFluctuatingOptions(ServerInfoProcessor& 
 	if (flags & GroupMemberOptions::Features::Friend)
 	{
 		connect(pOptions->pFriendAction, &QAction::triggered, this, [=, &processor] {
-			processor.removeFriend(pInfo->id());
+			processor.requestSender().removeFriend(pInfo->id());
 		});
 	}
 	else
 	{
 		connect(pOptions->pFriendAction, &QAction::triggered, this, [=, &processor] {
-			processor.sendFriendRequest(pInfo->id());
+			processor.requestSender().sendFriendRequest(pInfo->id());
 		});
 	}
 	if (flags & GroupMemberOptions::Features::YouAreAdmin)
 	{
 		qDebug() << connect(pOptions->pRemoveFromGroup, &QAction::triggered, this, [=, &processor, &page]() {
-			processor.removeFromGroup(page.chatId(), pInfo->id() );
+			processor.requestSender().removeFromGroup(page.chatId(), pInfo->id() );
 			});
 	}
 
@@ -173,28 +173,28 @@ void ContactView_MembersSection::connectFluctuatingOptions(ServerInfoProcessor& 
 void ContactView_MembersSection::connectOptionsInit(ServerInfoProcessor& processor, Chat& page, GroupMemberOptions::Features flags)
 {
 	connect(pOptions->pMessage, &QAction::triggered, this, [=, &page, &processor]() {
-		ChatInfo* chat = processor.privateChatById(pInfo->id());
+		ChatInfo* chat = processor.storage().privateChatById(pInfo->id());
 		if (chat == nullptr)
-			processor.createPrivateChatWithFriend(pInfo->id());
+			processor.requestSender().createPrivateChatWithFriend(pInfo->id());
 		else
 			page.setChat(chat->id());
 		
 		emit switchToPrivateChat(pInfo->id());
 	});
 	connect(pOptions->pBlock, &QAction::triggered, this, [=, &processor] {
-		processor.blockUser(pInfo->id());
+		processor.requestSender().blockUser(pInfo->id());
 	});
 	connect(pOptions->pFriendAction, &QAction::triggered, this, [=, &processor] {
 		if (flags & GroupMemberOptions::Features::Friend)
-			processor.removeFriend(pInfo->id());
+			processor.requestSender().removeFriend(pInfo->id());
 		else
-			processor.sendFriendRequest(pInfo->id());
+			processor.requestSender().sendFriendRequest(pInfo->id());
 	});
 
 	if (flags & GroupMemberOptions::Features::YouAreAdmin)
 	{
 		qDebug() << connect(pOptions->pRemoveFromGroup, &QAction::triggered, this, [=, &processor, &page]() {
-			processor.removeFromGroup(page.chatId(), pInfo->id());
+			processor.requestSender().removeFromGroup(page.chatId(), pInfo->id());
 		});
 	}
 }

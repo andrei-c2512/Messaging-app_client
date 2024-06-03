@@ -4,7 +4,6 @@
 #include "StyleBase/ButtonStyleRepository.h"
 
 
-
 ContactView::ContactView(QWidget* parent)
     :QWidget(parent)
 {
@@ -72,7 +71,7 @@ void ContactView::setContactInfo(ContactInfo& info)
 }
 
 void ContactView::emitRemove(int id){ emit remove(id);}
-void ContactView::setContactInfo(UserInfo& info)
+void ContactView::setContactInfo(AccountInfoStorage& info)
 {
     pName->setText(info.name());
 }

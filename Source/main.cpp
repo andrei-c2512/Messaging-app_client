@@ -13,5 +13,6 @@ int main(int argc, char *argv[])
     a.setStyle(new CustomStyle);
 
     w.show();
+    qDebug() << QApplication::applicationDirPath();
     return a.exec();
 }

@@ -45,7 +45,7 @@ void PageManager::connectButtons(PageManager::PageType type , const Page* page)
                 this->setPage(PageType::Register);
                 emit this->pageChanged(PageType::Register);
             });
-            connect(&serverInfoProcessor , &ServerInfoProcessor::signInAccepted , this , [this](){
+            connect(&serverInfoProcessor.handler(), &ResponseHandler::signInAccepted, this, [this]() {
                 this->setPage(PageType::Main);
                 emit this->pageChanged(PageType::Main);
             });
@@ -58,7 +58,7 @@ void PageManager::connectButtons(PageManager::PageType type , const Page* page)
                 this->setPage(PageType::Login);
                 emit this->pageChanged(PageType::Login);
             });
-            connect(&serverInfoProcessor , &ServerInfoProcessor::signInAccepted , this , [this](){
+            connect(&serverInfoProcessor.handler(), &ResponseHandler::signInAccepted, this, [this]() {
                 this->setPage(PageType::Main);
                 emit this->pageChanged(PageType::Main);
             });
@@ -69,7 +69,6 @@ void PageManager::connectButtons(PageManager::PageType type , const Page* page)
         {
 
         }
-        return;
         return;
     default:
         return;

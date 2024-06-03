@@ -1,6 +1,7 @@
-QT       += core gui
+QT  += core gui
 QT += network
 QT += multimedia
+QT += websockets
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17

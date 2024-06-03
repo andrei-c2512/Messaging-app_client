@@ -176,9 +176,9 @@ void ContactView_SocialPage::connectFriendOptions(ServerInfoProcessor& processor
     CustomButton& messageBtn = w->sendMessageBtn();
 
     connect(&messageBtn, &CustomButton::clicked, this, [=, &processor, &page, &widget]() {
-        ChatInfo* chat = processor.privateChatById(pInfo->id());
+        ChatInfo* chat = processor.storage().privateChatById(pInfo->id());
     if (chat == nullptr)
-        processor.createPrivateChatWithFriend(pInfo->id());
+        processor.requestSender().createPrivateChatWithFriend(pInfo->id());
     else
     {
         page.setChat(chat->id());
@@ -187,10 +187,10 @@ void ContactView_SocialPage::connectFriendOptions(ServerInfoProcessor& processor
         });
 
     connect(&w->removeAction(), &QAction::triggered, this, [=, &processor]() {
-        processor.removeFriend(pInfo->id());
+        processor.requestSender().removeFriend(pInfo->id());
         });
     connect(&w->blockAction(), &QAction::triggered, this, [=, &processor]() {
-        processor.blockUser(pInfo->id());
+        processor.requestSender().blockUser(pInfo->id());
         emit remove(pInfo->id());
         });
 }
@@ -205,7 +205,7 @@ void ContactView_SocialPage::connectStrangerOptions(ServerInfoProcessor& process
         connect(&btn, &TwoStateButton::clicked, this, [=, &processor, &btn]() {
         if (btn.isActive() == false)
         {
-            processor.sendFriendRequest(pInfo->id());
+            processor.requestSender().sendFriendRequest(pInfo->id());
             btn.setActive(true);
         }
             });
@@ -216,15 +216,15 @@ void ContactView_SocialPage::connectRequestOptions(ServerInfoProcessor& processo
     w->disconnectAll();
     connect(&w->acceptBtn(), &CustomButton::clicked, this, [=, &processor]() {
         emit remove(pInfo->id());
-    processor.manageFriendRequest(true, pInfo->id());
-    processor.removeRequest(pInfo->id());
+    processor.requestSender().manageFriendRequest(true, pInfo->id());
+    processor.storage().removeRequest(pInfo->id());
     pInfo = nullptr;
     deleteLater();
         });
     connect(&w->rejectBtn(), &CustomButton::clicked, this, [=, &processor]() {
         emit remove(pInfo->id());
-    processor.manageFriendRequest(false, pInfo->id());
-    processor.removeRequest(pInfo->id());
+    processor.requestSender().manageFriendRequest(false, pInfo->id());
+    processor.storage().removeRequest(pInfo->id());
     pInfo = nullptr;
     deleteLater();
         });
@@ -235,7 +235,7 @@ void ContactView_SocialPage::connectBlockedOptions(ServerInfoProcessor& processo
     btn->disconnect();
 
     connect(btn, &CustomButton::clicked, this, [=, &processor] {
-        processor.unblockUser(pInfo->id());
+        processor.requestSender().unblockUser(pInfo->id());
     //emit remove();
         });
 }
@@ -247,9 +247,9 @@ QWidget* ContactView_SocialPage::friendOptions(ServerInfoProcessor& processor, C
     CustomButton& messageBtn = w->sendMessageBtn();
 
     connect(&messageBtn, &CustomButton::clicked, this, [=, &processor, &page, &widget]() {
-        ChatInfo* chat = processor.privateChatById(pInfo->id());
+        ChatInfo* chat = processor.storage().privateChatById(pInfo->id());
         if (chat == nullptr)
-            processor.createPrivateChatWithFriend(pInfo->id());
+            processor.requestSender().createPrivateChatWithFriend(pInfo->id());
         else
         {
             page.setChat(chat->id());
@@ -258,11 +258,11 @@ QWidget* ContactView_SocialPage::friendOptions(ServerInfoProcessor& processor, C
         });
 
     connect(&w->removeAction(), &QAction::triggered, this, [=, &processor]() {
-        processor.removeFriend(pInfo->id());
+        processor.requestSender().removeFriend(pInfo->id());
         });
 
     connect(&w->blockAction(), &QAction::triggered, this, [=, &processor]() {
-        processor.blockUser(pInfo->id());
+        processor.requestSender().blockUser(pInfo->id());
         });
 
     optionList[int(SearchType::FriendList)] = w;
@@ -278,7 +278,7 @@ QWidget* ContactView_SocialPage::strangerOptions(ServerInfoProcessor& processor)
         connect(&btn, &TwoStateButton::clicked, this, [=, &processor, &btn]() {
         if (btn.isActive() == false)
         {
-            processor.sendFriendRequest(pInfo->id());
+            processor.requestSender().sendFriendRequest(pInfo->id());
             btn.setActive(true);
         }
             });
@@ -290,15 +290,15 @@ QWidget* ContactView_SocialPage::requestOptions(ServerInfoProcessor& processor)
     RequestOptions* w = new RequestOptions;
     connect(&w->acceptBtn(), &CustomButton::clicked, this, [=, &processor]() {
         emit remove(pInfo->id());
-        processor.manageFriendRequest(true, pInfo->id());
-        processor.removeRequest(pInfo->id());
+        processor.requestSender().manageFriendRequest(true, pInfo->id());
+        processor.storage().removeRequest(pInfo->id());
         pInfo = nullptr;
         deleteLater();
         });
     connect(&w->rejectBtn(), &CustomButton::clicked, this, [=, &processor]() {
         emit remove(pInfo->id());
-        processor.manageFriendRequest(false, pInfo->id());
-        processor.removeRequest(pInfo->id());
+        processor.requestSender().manageFriendRequest(false, pInfo->id());
+        processor.storage().removeRequest(pInfo->id());
         pInfo = nullptr;
         deleteLater();
     });

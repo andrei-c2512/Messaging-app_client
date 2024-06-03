@@ -2,6 +2,7 @@
 #include "StyleBase/StyleRepository.h"
 #include <forward_list>
 #include "Tools.h"
+#include "Network/AccountDataStructures/NullInfo.h"
 
 static QDate now = QDate::currentDate();
 
@@ -359,7 +360,7 @@ void ChatHistory::setChatInfo(ChatInfo* info) {
     }
 
     pInfo = info;
-    memberNames = processor.namesForContacts(pInfo->members());
+    memberNames = processor.storage().namesForContacts(pInfo->members());
 
     connect(pInfo, &ChatInfo::destroyed, this, [=]() {
         pInfo = &NullInfo::instance().nullChat();

@@ -1,3 +1,4 @@
+#pragma once
 #include <QImage>
 #include <QPixmap>
 #include <QObject>
@@ -16,6 +17,7 @@ public:
 	QImage provideImage(const QString& name);
 	void addImage(const QUrl& url , const QString& name);
 	bool fileExists(const QString& name);
+	void setDirName(const QString& name);
 	static QString numToString(int num);
 	static QString constructFileName(int num , int extension);
 private:
@@ -23,6 +25,6 @@ private:
 private:
 	std::vector<QImage> cache;
 	QDir cacheDir;
-
+	QString dirName;
 	int _count;
 };

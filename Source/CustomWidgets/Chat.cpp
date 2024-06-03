@@ -165,13 +165,13 @@ void ChatTextEdit::keyPressEvent(QKeyEvent* event)
 void ChatTextEdit::setCharacterLimit(int limit) { _limit = limit; }
 void ChatTextEdit::sendMessage()
 {
-    emit messageCreated(serverInfoProcessor.name(), CustomTextEdit::toPlainText());
+    emit messageCreated(serverInfoProcessor.storage().name(), CustomTextEdit::toPlainText());
     CustomTextEdit::clear();
 }
 
 void ChatTextEdit::sendMedia()
 {
-    emit mediaMessageCreated(serverInfoProcessor.name(), mediaArea.mediaUrls());
+    emit mediaMessageCreated(serverInfoProcessor.storage().name(), mediaArea.mediaUrls());
     mediaArea.clear();
 }
 
@@ -261,7 +261,7 @@ void BlockUI::setBlockMode(Mode mode, ContactInfo* info, ServerInfoProcessor& pr
         pLabel->setText("You have blocked " + info->name());
         pUnblockButton->setVisible(true);
         connect(pUnblockButton, &CustomButton::clicked, this, [&processor, info]() {
-            processor.unblockUser(info->id());
+            processor.requestSender().unblockUser(info->id());
             });
     }
 }
@@ -309,16 +309,16 @@ Chat::Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor, UserSelect
     signalsAndSlots();
     lastPrivateChat = nullptr;
     lastPrivateChatUser = nullptr;
-    connect(&ServerInfoProcessor, &ServerInfoProcessor::allUserInfoReceived, this, [=, &ServerInfoProcessor]() {
-        if (ServerInfoProcessor.chatListEmpty() == false)
-            setChat(ServerInfoProcessor.firstChat());
+    connect(&ServerInfoProcessor.handler(), &ResponseHandler::allUserInfoReceived, this, [=, &ServerInfoProcessor]() {
+        if (ServerInfoProcessor.storage().chatListEmpty() == false)
+            setChat(ServerInfoProcessor.storage().firstChat());
         });
 
     connect(&widget, &UserSelectorWidget::switchToChat, this, [=](int chatId) {
         setChat(chatId);
         });
 
-    connect(&ServerInfoProcessor, &ServerInfoProcessor::accountDataCleared, this, [=]() {
+    connect(&ServerInfoProcessor.storage(), &AccountInfoStorage::accountDataCleared, this, [=]() {
         lastChat = nullptr;
         });
     lastChat = nullptr;
@@ -342,7 +342,7 @@ void Chat::setupUi(KeywordCombo& keywordCombo)
     pGroupName->setShrinkToFit(true);
     pGroupName->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
     connect(pGroupName, &TitleTextEdit::titleChanged, this, [=](QString str) {
-        processor.updateChatName(pChat->chatId(), str);
+        processor.requestSender().updateChatName(pChat->chatId(), str);
         });
     pChat = new ChatHistory(nullptr , processor);
 
@@ -381,7 +381,7 @@ void Chat::setChat(ChatInfo& info)
         BlockUI::Mode mode = BlockUI::Mode::Invalid;
         auto& list = info.members();
         int i = 0;
-        if (list[i] == processor.id())
+        if (list[i] == processor.storage().id())
             i = 1;
         if (lastPrivateChat)
         {
@@ -389,7 +389,7 @@ void Chat::setChat(ChatInfo& info)
             disconnect(lastPrivateChat, &ChatInfo::blockedYou, this, &Chat::onGettingBlocked);
         }
 
-        ContactInfo* contactInfo = processor.findUser(list[i]);
+        ContactInfo* contactInfo = processor.storage().findUser(list[i]);
 
         char flags = contactInfo->flags();
         if (flags & (char)ContactInfo::Status::HasBlockedYou)
@@ -426,7 +426,7 @@ void Chat::setChat(ChatInfo& info)
 
     pGroupName->setTitle(info.name());
     pChat->setChatInfo(&info);
-    setMemberKeyWords(processor.namesForContacts(info.members()));
+    setMemberKeyWords(processor.storage().namesForContacts(info.members()));
     lastChat = &info;
 }
 
@@ -467,7 +467,7 @@ void Chat::onGettingRemoved(bool forcefully)
 
 void Chat::setChat(int id)
 {
-    setChat(processor.getChatById(id));
+    setChat(processor.storage().getChatById(id));
 }
 TitleTextEdit& Chat::groupNameEdit() { return *pGroupName; }
 

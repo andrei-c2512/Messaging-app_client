@@ -2,6 +2,7 @@
 #include "StyleBase/StyleRepository.h"
 #include "StyleBase/ButtonStyleRepository.h"
 #include "Tools.h"
+#include "Network/AccountDataStructures/NullInfo.h"
 
 bool imgInit = false;
 static const QSize exclamationImgSize = QSize(32, 32);
@@ -152,15 +153,15 @@ ChatListWidget::ChatListWidget(QWidget* parent , const ServerInfoProcessor& info
 {
     setAttribute(Qt::WA_StyledBackground);
 
-    chatInfo_list = (type == ChatListWidget::Type::ChatList) ? &infoProcessor.chatList() : &infoProcessor.requestList();
+    chatInfo_list = (type == ChatListWidget::Type::ChatList) ? &infoProcessor.storage().chatList() : &infoProcessor.storage().requestList();
     calculatePlaces();
-    connect(&infoProcessor, &ServerInfoProcessor::newChatData , this , [this](){
+    connect(&infoProcessor.handler(), &ResponseHandler::newChatData, this, [this]() {
         auto& obj = *this;
-        obj.chatInfo_list = (obj.type == ChatListWidget::Type::ChatList) ? &obj.infoProcessor.chatList() : &obj.infoProcessor.requestList();
+        obj.chatInfo_list = (obj.type == ChatListWidget::Type::ChatList) ? &obj.infoProcessor.storage().chatList() : &obj.infoProcessor.storage().requestList();
         obj.rearrange();
     });
-    connect(&infoProcessor, &ServerInfoProcessor::createdNewChat, this, [=, &manager](int id) {
-        ChatInfo* info = Tools::binaryIdSearch(infoProcessor.chatList(), id);
+    connect(&infoProcessor.handler(), &ResponseHandler::createdNewChat, this, [=, &manager](int id) {
+        ChatInfo* info = Tools::binaryIdSearch(infoProcessor.storage().chatList(), id);
 
         ChatView* v = new ChatView(nullptr , *info);
         chatView_list.emplace_back(v);
@@ -179,8 +180,8 @@ ChatListWidget::ChatListWidget(QWidget* parent , const ServerInfoProcessor& info
          });
 
     });
-    connect(&infoProcessor, &ServerInfoProcessor::addedToNewChat, this, [=](int id) {
-        ChatInfo* info = Tools::binaryIdSearch(infoProcessor.chatList(), id);
+    connect(&infoProcessor.handler(), &ResponseHandler::addedToNewChat, this, [=](int id) {
+        ChatInfo* info = Tools::binaryIdSearch(infoProcessor.storage().chatList(), id);
 
         ChatView* v = new ChatView(nullptr, *info);
         chatView_list.emplace_back(v);
@@ -281,7 +282,6 @@ void ChatListWidget::removeViews(int n)
 
 void ChatListWidget::rearrange()
 {
-    qDebug() << " SKrrrrrr";
     //making the number of views equal to the number of chats
     if(chatInfo_list->size() > chatView_list.size())
         addViews(int(chatInfo_list->size() - chatView_list.size()));
@@ -409,9 +409,9 @@ OptionSection::OptionSection(QWidget* parent , const ServerInfoProcessor& proces
         rect.setWidth(var.toInt());
         this->setGeometry(std::move(rect));
     });
-    connect(&serverProcessor , &ServerInfoProcessor::signInAccepted , this , [this](){
+    connect(&serverProcessor.handler(), &ResponseHandler::signInAccepted, this, [this]() {
         auto& t = *this;
-        t.pProfileView->setName(t.serverProcessor.name());
+        t.pProfileView->setName(t.serverProcessor.storage().name());
     });
 }
 
@@ -503,7 +503,7 @@ void OptionSection::setupUi(UserSelectorWidget& userSelectorWidget)
 
     pProfileView = new ProfileView;
     //pProfileView->setProfilePicture(QPixmap(":/images/defaultPfp.png"));
-    pProfileView->setName(serverProcessor.name());
+    pProfileView->setName(serverProcessor.storage().name());
 
     pListView = new ChatListView(nullptr , serverProcessor , subpageManager);
 

@@ -1,3 +1,4 @@
+#pragma once
 #include <QTcpSocket>
 #include <queue>
 #include <QImage>
@@ -24,7 +25,7 @@ public:
 	
 	UploadData readyMedia(int handlingid);
 private:
-	static constexpr qsizetype chunkSize = 1024; // bytes
+	static constexpr qsizetype chunkSize = 4096; // bytes // 4096
 	std::queue<UploadData> mediaQueue;
 	std::queue<std::unique_ptr<QByteArray>> chunkQueue;
 

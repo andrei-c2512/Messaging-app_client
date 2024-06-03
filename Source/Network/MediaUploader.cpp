@@ -31,6 +31,7 @@ void MediaUploader::nextMedia(QString id)
 
 		file.open(QFile::ReadOnly);
 
+
 		while (file.atEnd() == false)
 		{
 			chunkQueue.emplace(std::make_unique<QByteArray>(file.read(chunkSize)));
@@ -59,7 +60,7 @@ void MediaUploader::nextChunk()
 		}
 
 		chunkQueue.pop();
-		QByteArray message = QByteArray::number((int)RequestToServer::MediaChunk) + '(' + currentId.toUtf8() + ',' + *std::move(data) + ')';
+		QByteArray message = QByteArray::number((int)RequestToServer::UploadMediaChunk) + '(' + currentId.toUtf8() + ',' + *std::move(data) + ')';
 		socket.write(message);
 		socket.flush();
 	}

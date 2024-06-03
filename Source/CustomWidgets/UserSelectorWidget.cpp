@@ -104,7 +104,7 @@ void UserSelectorWidget::launch(QPoint point)
 }
 void UserSelectorWidget::launch()
 {
-    pList->setContactList(processor.friendList());
+    pList->setContactList(processor.storage().friendList());
     pList->resetViews();
     setVisible(true);
 }
@@ -115,7 +115,7 @@ void UserSelectorWidget::search(const QString& str)
 {
     std::vector<std::pair<ContactInfo*, int>> _foundUsers;
     //first one is the the object , second is the pos at which the substring is found
-    auto& list = processor.friendList();
+    auto& list = processor.storage().friendList();
     for (ContactInfo* c : list)
     {
         int pos = c->name().indexOf(str, 0, Qt::CaseInsensitive);
@@ -147,21 +147,21 @@ void UserSelectorWidget::setupUi()
         if (list.size() > 1)
         {
             if (_role == UserSelectorWidget::Role::MakeGroupChat)
-                processor.createGroupChat(list);
+                processor.requestSender().createGroupChat(list);
             else if (_role == UserSelectorWidget::Role::AddToGroupChat)
-                processor.addPeopleToGroup(_chatId , list);
+                processor.requestSender().addPeopleToGroup(_chatId , list);
         }
         else if (list.size() == 1)
         {
             if(_role == UserSelectorWidget::Role::AddToGroupChat)
-                processor.addPeopleToGroup(_chatId, list);
+                processor.requestSender().addPeopleToGroup(_chatId, list);
             else
             {
-                ChatInfo* chat = processor.privateChatById(list.front());
+                ChatInfo* chat = processor.storage().privateChatById(list.front());
                 if (chat)
                     emit switchToChat(chat->id());
                 else
-                    processor.createPrivateChatWithFriend(list.front());
+                    processor.requestSender().createPrivateChatWithFriend(list.front());
             }
         }
 
@@ -186,9 +186,9 @@ void UserSelectorWidget::setupUi()
     pLayout->addStretch(1);
     pLayout->addWidget(pDoneButton);
 
-    connect(&processor, &ServerInfoProcessor::newFriend, this, [=]() {
+    connect(&processor.handler(), &ResponseHandler::newFriend, this, [=]() {
         if(isVisible() == false)
-            pList->setContactList(processor.friendList());
+            pList->setContactList(processor.storage().friendList());
         });
 
 

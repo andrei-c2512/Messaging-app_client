@@ -45,10 +45,14 @@ void RegisterPage::setupUi()
         }
 
         {
-            obj.serverInfoProcessor.setName(pForm->tokenEdit().lineEdit().text());
-            obj.serverInfoProcessor.setEmail(pForm->emailEdit().lineEdit().text());
-            obj.serverInfoProcessor.setPassword(pForm->passwordEdit().lineEdit().text());
-            obj.serverInfoProcessor.registerIntoDatabase();
+            QString name = pForm->tokenEdit().lineEdit().text(),
+                email = pForm->emailEdit().lineEdit().text(),
+                password = pForm->passwordEdit().lineEdit().text();
+
+            obj.serverInfoProcessor.storage().setName(name);
+            obj.serverInfoProcessor.storage().setEmail(email);
+            obj.serverInfoProcessor.storage().setPassword(password);
+            obj.serverInfoProcessor.requestSender().registerIntoDatabase(name , email ,password);
         }
     });
     pGoBackBtn = new CustomButton(nullptr , ButtonStyleRepository::goBackColor_LeftArrow());
@@ -61,10 +65,10 @@ void RegisterPage::setupUi()
     pWidgetLayout->addStretch(1);
 
 
-    connect(&serverInfoProcessor , &ServerInfoProcessor::emailUsedError , this , [this](){
+    connect(&serverInfoProcessor.handler(), &ResponseHandler::emailUsedError, this, [this]() {
         this->pForm->emailEdit().warningLabel().setText("<b>Email</b> already in use");
     });
-    connect(&serverInfoProcessor , &ServerInfoProcessor::nameUsedError , this , [this](){
+    connect(&serverInfoProcessor.handler(), &ResponseHandler::nameUsedError, this, [this]() {
         this->pForm->tokenEdit().warningLabel().setText("<b>Name</b> already in use");
     });
     pLayout = new QHBoxLayout(this);

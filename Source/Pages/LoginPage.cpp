@@ -42,9 +42,11 @@ void LoginPage::setupUi()
         }
 
         {
-            obj.serverInfoProcessor.setName(pForm->tokenEdit().lineEdit().text());
-            obj.serverInfoProcessor.setPassword(pForm->passwordEdit().lineEdit().text());
-            obj.serverInfoProcessor.logIntoDatabase();
+            QString name = pForm->tokenEdit().lineEdit().text();
+            QString password = pForm->passwordEdit().lineEdit().text();
+            obj.serverInfoProcessor.storage().setName(name);
+            obj.serverInfoProcessor.storage().setPassword(password);
+            obj.serverInfoProcessor.requestSender().logIntoDatabase(name , password);
         }
     });
 
@@ -61,10 +63,10 @@ void LoginPage::setupUi()
     pRegisterOptionLayout->addWidget(pRegisterButton);
 
 
-    connect(&serverInfoProcessor , &ServerInfoProcessor::incorrectPasswordError , this , [this](){
+    connect(&serverInfoProcessor.handler(), &ResponseHandler::incorrectPasswordError, this, [this]() {
         this->pForm->passwordEdit().warningLabel().setText("Incorrect password");
     });
-    connect(&serverInfoProcessor , &ServerInfoProcessor::nameNotFoundError , this , [this](){
+    connect(&serverInfoProcessor.handler(), &ResponseHandler::nameNotFoundError, this, [this]() {
         this->pForm->tokenEdit().warningLabel().setText("Name not found");
     });
     pMainLayout = new QVBoxLayout();

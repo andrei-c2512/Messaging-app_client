@@ -18,8 +18,8 @@ enum class RequestToServer{
     RemoveFromGroup,
     AddPeopleToTheChat,
     MediaUploadId,
-    MediaChunk,
-    
+    UploadMediaChunk,
+    ReceiveMediaChunk,
     Invalid
 };
 

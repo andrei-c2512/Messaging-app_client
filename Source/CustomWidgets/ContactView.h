@@ -8,7 +8,7 @@
 #include "ProfilePicLabel.h"
 #include "CustomStyledWidgets/CustomButton.h"
 #include "CustomStyledWidgets/SelectableButton.h"
-#include "Network/UserInfo.h"
+#include "Network/AccountInfoStorage.h"
 #include <QMenu>
 #include <QStackedWidget>
 #include "StyleBase/ImagePainter.h"
@@ -19,7 +19,7 @@ class ContactView : public QWidget{
 public:
     ContactView(QWidget* parent = nullptr);
     void setContactInfo(ContactInfo& info);
-    void setContactInfo(UserInfo& info);
+    void setContactInfo(AccountInfoStorage& info);
     void setProfilePicture(QPixmap pixmap);
     void setName(QString name);
     void setNameFont(const QFont& font);

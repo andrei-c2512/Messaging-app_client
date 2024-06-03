@@ -59,6 +59,16 @@ QString MediaCache::extractExtension(const QString& fileName)
 	}
 }
 
+void MediaCache::setDirName(const QString& name)
+{
+	dirName = name;
+	QDir dir = QApplication::applicationDirPath();
+	dir.cdUp();
+	dir.mkdir("cache-" + name);
+	dir.cd("cache-" + name);
+	cacheDir = dir;
+}
+
 
 void MediaCache::addImage(const QUrl& url, const QString& name)
 {

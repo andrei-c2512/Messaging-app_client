@@ -10,7 +10,7 @@ MembersSection::MembersSection(QWidget* parent, ServerInfoProcessor& ServerInfoP
 }
 void MembersSection::setContactList(std::vector<int> contactIdList, ServerInfoProcessor& processor, Chat& page,  int adminId)
 {
-    auto contactList = processor.findUsers(contactIdList);
+    auto contactList = processor.storage().findUsers(contactIdList);
     short dif = short(_viewList.size()) - short(contactList.size());
     short oldSize = (short)_viewList.size();
     if (dif < 0)
@@ -45,9 +45,9 @@ void MembersSection::setContactList(std::vector<int> contactIdList, ServerInfoPr
         for (short i = oldSize - dif; i < oldSize; i++)
             _viewList[i]->setVisible(false);
     }
-    pUserView->setContactInfo(processor);
+    pUserView->setContactInfo(processor.storage());
     GroupMemberOptions::Features init = GroupMemberOptions::Features::Null;
-    if (adminId == processor.id())
+    if (adminId == processor.storage().id())
     {
         init = GroupMemberOptions::Features::YouAreAdmin;
         pUserView->setIsAdmin(true);
@@ -138,7 +138,7 @@ ChatPage::ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor , 
 {
     setupUi(widget , keywordCombo);
     pInfo = nullptr;
-    connect(&ServerInfoProcessor, &ServerInfoProcessor::accountDataCleared, this, [=]() {
+    connect(&ServerInfoProcessor.storage(), &AccountInfoStorage::accountDataCleared, this, [=]() {
         pInfo = nullptr;
         });
 }
@@ -153,14 +153,14 @@ void ChatPage::setupUi(UserSelectorWidget& userSelectorWidget, KeywordCombo& key
         userSelector.setChatId(pInfo->id());
         userSelector.setRole(UserSelectorWidget::Role::AddToGroupChat);
         userSelector.flip(Tools::windowPos(pToolBar) + QPoint(0, pToolBar->height()) ,
-        ContactInfo::subtractFromList(serverInfoProcessor.friendList() , pMembersSection->contactList()));
+        ContactInfo::subtractFromList(serverInfoProcessor.storage().friendList() , pMembersSection->contactList()));
     });
 
     pLeaveButton = new QAction;
     pLeaveButton->setIcon(StyleRepository::ToolBar::leavePixmap());
     
     connect(pLeaveButton, &QAction::triggered, this, [=]() {
-        serverInfoProcessor.leaveFromGroup(pInfo->id());
+        serverInfoProcessor.requestSender().leaveFromGroup(pInfo->id());
     });
 
     QWidget* spacer = new QWidget;
@@ -234,5 +234,5 @@ void ChatPage::setChat(ChatInfo& info)
 
 void ChatPage::setChat(int id)
 {
-    setChat(serverInfoProcessor.getChatById(id));
+    setChat(serverInfoProcessor.storage().getChatById(id));
 }
