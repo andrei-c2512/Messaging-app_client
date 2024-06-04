@@ -45,7 +45,7 @@ private:
 class ChatTextEdit : public STextEdit {
     Q_OBJECT
 public:
-    ChatTextEdit(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& combo, MediaScrollArea& mediaArea);
+    ChatTextEdit(QWidget* parent, const ConnectionHandler& serverInfoProcessor0, KeywordCombo& combo, MediaScrollArea& mediaArea);
     void setCharacterLimit(int limit);
 signals:
     void messageCreated(const QString& name, const QString& message);
@@ -56,18 +56,18 @@ private:
     void sendMessage();
     void sendMedia();
 private:
-    const ServerInfoProcessor& serverInfoProcessor;
+    const ConnectionHandler& serverInfoProcessor;
     MediaScrollArea& mediaArea;
     int _limit = 100;
 };
 
 class ChatMessageBar : public QWidget {
 public:
-    ChatMessageBar(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0 ,KeywordCombo& keywordCombo);
+    ChatMessageBar(QWidget* parent, const ConnectionHandler& serverInfoProcessor0 ,KeywordCombo& keywordCombo);
     void setCharacterLimit(int n);
     ChatTextEdit& textEdit();
 private:
-    void setupUi(const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& keywordCombo);
+    void setupUi(const ConnectionHandler& serverInfoProcessor0, KeywordCombo& keywordCombo);
 private:
     QVBoxLayout* pLayout;
     QHBoxLayout*  pBarLayout;
@@ -89,7 +89,7 @@ public:
     };
 public:
     BlockUI(QWidget* parent = nullptr);
-    void setBlockMode(Mode mode, ContactInfo* info, ServerInfoProcessor& processor);
+    void setBlockMode(Mode mode, ContactInfo* info, ConnectionHandler& processor);
     void setRemovedMode(Mode mode);
 private:
     void setupUi();
@@ -119,7 +119,7 @@ class Chat: public QWidget {
 public:
     Q_OBJECT
 public:
-    Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget, KeywordCombo& keywordCombo);
+    Chat(QWidget* parent, ConnectionHandler& ServerInfoProcessor , UserSelectorWidget& widget, KeywordCombo& keywordCombo);
     void setChat(ChatInfo& pInfo);
     void setChat(int id);
     TitleTextEdit& groupNameEdit();
@@ -149,7 +149,7 @@ private:
     ChatMessageBar* pMessageBar;
     BlockUI* pBlockUI;
 
-    ServerInfoProcessor& processor;
+    ConnectionHandler& processor;
     static constexpr int characterLimit = 250;
 };
 

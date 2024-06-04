@@ -1,7 +1,7 @@
 #include "RegisterPage.h"
 #include "StyleBase/StyleRepository.h"
 #include "StyleBase/ButtonStyleRepository.h"
-RegisterPage::RegisterPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor)
+RegisterPage::RegisterPage(QWidget* parent , ConnectionHandler& ServerInfoProcessor)
     :Page(parent , ServerInfoProcessor)
 {
     setupUi();

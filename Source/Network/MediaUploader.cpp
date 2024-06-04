@@ -60,7 +60,7 @@ void MediaUploader::nextChunk()
 		}
 
 		chunkQueue.pop();
-		QByteArray message = QByteArray::number((int)RequestToServer::UploadMediaChunk) + '(' + currentId.toUtf8() + ',' + *std::move(data) + ')';
+		QByteArray message = QByteArray::number((int)RequestToServer::MediaChunk) + '(' + currentId.toUtf8() + ',' + *std::move(data) + ')';
 		socket.write(message);
 		socket.flush();
 	}
@@ -107,5 +107,5 @@ void MediaUploader::requestId(const QString& suf, int chatId, int senderId , std
 
 	QByteArray cmd = Tools::makeList('(', ')', ',', std::move(args));
 	qDebug() << cmd;
-	socket.write(QByteArray::number((int)RequestToServer::MediaUploadId) + cmd);
+	socket.write(QByteArray::number((int)RequestToServer::UploadId) + cmd);
 }

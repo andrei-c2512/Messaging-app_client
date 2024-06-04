@@ -29,7 +29,7 @@ private:
     Ui::MainWindow *ui;
     BackgroundShiftOnMouseEffect* pEffect;
     PageManager* pPageManager;
-    ServerInfoProcessor* pServerInfoProcessor;
+    ConnectionHandler* pServerInfoProcessor;
     UserSelectorWidget* pSelectorWidget;
 
 };

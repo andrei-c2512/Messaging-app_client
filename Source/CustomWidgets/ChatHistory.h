@@ -19,8 +19,8 @@ class ChatRecord : public QWidget {
     Q_OBJECT
 public:
     ChatRecord(QWidget* parent = nullptr);
-    ChatRecord(QWidget* parent, MessageInfo* pInfo0, const std::vector<QString>& memberNames, ServerInfoProcessor& processor , bool waitingForResponse = false);
-    void setInfo(MessageInfo* info, const std::vector<QString>& memberNames , ServerInfoProcessor& processor);
+    ChatRecord(QWidget* parent, MessageInfo* pInfo0, const std::vector<QString>& memberNames, ConnectionHandler& processor , bool waitingForResponse = false);
+    void setInfo(MessageInfo* info, const std::vector<QString>& memberNames , ConnectionHandler& processor);
     void setMessage(const QString& str);
     void setName(const QString& name);
     QString message() const;
@@ -68,7 +68,7 @@ private:
 class ChatHistory : public QWidget {
     Q_OBJECT
 public:
-    ChatHistory(QWidget* parent , ServerInfoProcessor& processor0);
+    ChatHistory(QWidget* parent , ConnectionHandler& processor0);
     void setChatInfo(ChatInfo* info);
     const ChatRecord& recordAt(int index);
     int chatId() const;
@@ -101,5 +101,5 @@ private:
     static constexpr int messagesLoaded = 25;
     int lastMessageLoadedIndex;
 
-    ServerInfoProcessor& processor;
+    ConnectionHandler& processor;
 };

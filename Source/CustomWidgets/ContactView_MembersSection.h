@@ -45,10 +45,10 @@ class ContactView_MembersSection : public ContactView {
 public:
 	ContactView_MembersSection(QWidget* parent = nullptr);
 	void setIsAdmin(bool admin);
-	void attatchOptions(ServerInfoProcessor& processor, Chat& page, GroupMemberOptions::Features flags);
+	void attatchOptions(ConnectionHandler& processor, Chat& page, GroupMemberOptions::Features flags);
 private:
-	void connectOptionsInit(ServerInfoProcessor& processor, Chat& page, GroupMemberOptions::Features flags);
-	void connectFluctuatingOptions(ServerInfoProcessor& processor, Chat& page, GroupMemberOptions::Features flags);
+	void connectOptionsInit(ConnectionHandler& processor, Chat& page, GroupMemberOptions::Features flags);
+	void connectFluctuatingOptions(ConnectionHandler& processor, Chat& page, GroupMemberOptions::Features flags);
 signals:
 	void switchToPrivateChat(int contactId);
 private:

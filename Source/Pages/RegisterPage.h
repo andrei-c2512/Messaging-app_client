@@ -8,7 +8,7 @@
 class RegisterPage : public Page{
     Q_OBJECT
 public:
-    RegisterPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor);
+    RegisterPage(QWidget* parent , ConnectionHandler& ServerInfoProcessor);
     const CustomButton* goBackBtn() const;
     const EvaluateButton* registerBtn() const;
 private:

@@ -1,19 +1,22 @@
 #include <QByteArray>
 #include <qDebug>
 #include <QTcpSocket>
+#include "MessageHandlingBase.h"
 
-//class MediaHandler {
-//public:
-//	MediaHandler();
-//	bool mediaReady() const;
-//	//the last byte of the chunk should represent if it is the final chunk or not
-//	void addChunk(QTcpSocket& socket , qsizetype id , QByteArray& chunk );
-//	qsizetype makeNewSlot( int extension , int chatId , int senderId , std::vector<int> members);
-//	std::unique_ptr<MediaHandlingData> readyMedia();
-//private:
-//	qsizetype sequence;
-//	std::vector<MediaHandlingData> mediaList;
-//	
-//	std::unique_ptr<MediaHandlingData> _readyMedia;
-//	bool _mediaReady;
-//};
+
+class MediaHandler {
+public:
+	MediaHandler();
+	bool mediaReady() const;
+	QString fileName() const;
+	std::unique_ptr<QByteArray> blob();
+	int extension() const;
+	void prepareNewMedia(QString fileName, int extension , qsizetype size);
+	void addBlob(QByteArray data);
+private:
+	int _extension;
+	std::unique_ptr<QByteArray> _blob;
+	qsizetype _fileSize = 0;
+	QString _fileName;
+	bool _mediaReady;
+};

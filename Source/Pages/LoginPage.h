@@ -14,7 +14,7 @@ class LoginPage : public Page
 {
     Q_OBJECT
 public:
-    LoginPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor);
+    LoginPage(QWidget* parent , ConnectionHandler& ServerInfoProcessor);
     const CustomButton* registerButton() const;
     const EvaluateButton* loginButton() const;
 private slots:

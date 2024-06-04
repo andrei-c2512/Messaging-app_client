@@ -23,8 +23,8 @@ class MembersSection : public QScrollArea {
     //to be styled in style.qss
     Q_OBJECT
 public:
-    MembersSection(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor);
-    void setContactList(std::vector<int> contactIdList , ServerInfoProcessor& processor, Chat& page, int adminId);
+    MembersSection(QWidget* parent , ConnectionHandler& ServerInfoProcessor);
+    void setContactList(std::vector<int> contactIdList , ConnectionHandler& processor, Chat& page, int adminId);
     void setAdmin(int admin);
     void removeContact(int id);
     void removeUserView();
@@ -39,7 +39,7 @@ private:
     std::vector<ContactInfo*> _contactInfoList;
     std::vector<ContactView_MembersSection*> _viewList;
     QVBoxLayout* pLayout;
-    ServerInfoProcessor& processor;
+    ConnectionHandler& processor;
     QLabel* pMembersLabel;
 };
 
@@ -48,7 +48,7 @@ class ChatPage : public Page{
 public:
     Q_OBJECT
 public:
-    ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget, KeywordCombo& keywordCombo);
+    ChatPage(QWidget* parent , ConnectionHandler& ServerInfoProcessor , UserSelectorWidget& widget, KeywordCombo& keywordCombo);
     void setChat(ChatInfo& pInfo);
     void setChat(int id);
 public slots:

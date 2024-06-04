@@ -19,7 +19,7 @@ public:
         Main
     };
 public:
-    PageManager(QWidget* parent , ServerInfoProcessor& pServerInfoProcessor , UserSelectorWidget& userSelectorWidget , KeywordCombo& keywordCombo );
+    PageManager(QWidget* parent , ConnectionHandler& pServerInfoProcessor , UserSelectorWidget& userSelectorWidget , KeywordCombo& keywordCombo );
 signals:
     void pageChanged(PageType type);
 private:
@@ -28,7 +28,7 @@ private:
     void setPage(PageManager::PageType type);
 private:
     std::vector<Page*> pageList;
-    ServerInfoProcessor& serverInfoProcessor;
+    ConnectionHandler& serverInfoProcessor;
 };
 
 #endif // PAGEMANAGER_H

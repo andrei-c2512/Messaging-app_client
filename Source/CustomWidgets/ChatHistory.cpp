@@ -16,7 +16,7 @@ ChatRecord::ChatRecord(QWidget* parent) : QWidget(parent) {
     setupUi(false);
 }
 
-ChatRecord::ChatRecord(QWidget* parent, MessageInfo* pInfo0, const std::vector<QString>& memberNames, ServerInfoProcessor& processor, bool waitingForResponse)
+ChatRecord::ChatRecord(QWidget* parent, MessageInfo* pInfo0, const std::vector<QString>& memberNames, ConnectionHandler& processor, bool waitingForResponse)
 {
     setupUi(waitingForResponse);
     setInfo(pInfo0, memberNames , processor);
@@ -80,7 +80,7 @@ void ChatRecord::setStatus(bool isFirstMessageOfSequence)
     pProfilePicture->setVisible(isFirstMessageOfSequence);
 }
 
-void ChatRecord::setInfo(MessageInfo* info, const std::vector<QString>& memberNames, ServerInfoProcessor& processor)
+void ChatRecord::setInfo(MessageInfo* info, const std::vector<QString>& memberNames, ConnectionHandler& processor)
 {
     pInfo = info;
     connect(info, &ChatInfo::destroyed, this, [=]() {
@@ -232,7 +232,7 @@ void ChatRecord::setName(const QString& name) { pName->setText(name + ':'); }
 QString ChatRecord::message() const { return pMessage->toPlainText(); }
 QString ChatRecord::name() const { return pName->text(); }
 
-ChatHistory::ChatHistory(QWidget* parent, ServerInfoProcessor& processor0) : QWidget(parent) , processor(processor0)
+ChatHistory::ChatHistory(QWidget* parent, ConnectionHandler& processor0) : QWidget(parent) , processor(processor0)
 {
     lastMessageLoadedIndex = 0;
     setupUi();

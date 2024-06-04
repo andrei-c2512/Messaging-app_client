@@ -3,40 +3,43 @@
 #include "MediaUploader.h"
 #include "MediaCache.h"
 #include "RequestSender.h"
+#include "MediaHandler.h"
+
 
 class ResponseHandler : public QObject{
     Q_OBJECT
 public:
 	ResponseHandler(QObject* parent , AccountInfoStorage& storage0 , MediaUploader& uploader0 , RequestSender& sender , MediaCache& cache);
-    int processCommand(const QString& str, int start);
-    int processSignInInfo(const QString& str, int start);
-    int processChatListInfo(const QString& str, int start);
-    std::pair<ChatInfo*, int> processChatInfo(const QString& str, int start);
-    std::pair<MessageInfo*, int> processMessageInfo(const QString& str, int start);
-    std::vector<MessageInfo*> extractHistoryFromChat(const QString& str, int start);
-    int processNewMessageInfo(const QString& str, int start);
-    int processContactInfo(const QString& str, int start);
-    std::vector<ContactInfo*>  processContactList(const QString& str, int start, int end);
-    int processNewFriendInfo(const QString& str, int start);
-    int processSearchedForList(const QString& str, int start);
-    int processNewFriendRequest(const QString& str, int start);
-    int processNewChat(const QString& str, int start);
-    int processFriendRemoval(const QString& str, int start);
-    int processGettingBlocked(const QString& str, int start);
-    int processPersonBlocked(const QString& str, int start);
-    int processListOfStrangers(const QString& str, int start);
-    int processUserUnblocked(const QString& str, int start);
-    int processUserUnblockedYou(const QString& str, int start);
-    int processNewChatName(const QString& str, int start);
-    int processGroupMemberRemoval(const QString& str, int start);
-    int processNewGroupMembers(const QString& str, int start);
-    int processNecessaryContacts(const QString& str, int start);
-    int processNewAdmin(const QString& str, int start);
-    int processFriendStatus(const QString& str, int start);
-    int processNewUploadId(const QString& str, int start);
-    int processChunkStatus(const QString& str, int start);
-    int processUploadName(const QString& str, int start);
-
+    qsizetype processCommand(const QByteArray& str, qsizetype start);
+    qsizetype processSignInInfo(const QByteArray& str, qsizetype start);
+    qsizetype processChatListInfo(const QByteArray& str, qsizetype start);
+    std::pair<ChatInfo*, int> processChatInfo(const QByteArray& str, qsizetype start);
+    std::pair<MessageInfo*, int> processMessageInfo(const QByteArray& str, qsizetype start);
+    std::vector<MessageInfo*> extractHistoryFromChat(const QByteArray& str, qsizetype start);
+    qsizetype processNewMessageInfo(const QByteArray& str, qsizetype start);
+    qsizetype processContactInfo(const QByteArray& str, qsizetype start);
+    std::vector<ContactInfo*>  processContactList(const QByteArray& str, qsizetype start, qsizetype end);
+    qsizetype processNewFriendInfo(const QByteArray& str, qsizetype start);
+    qsizetype processSearchedForList(const QByteArray& str, qsizetype start);
+    qsizetype processNewFriendRequest(const QByteArray& str, qsizetype start);
+    qsizetype processNewChat(const QByteArray& str, qsizetype start);
+    qsizetype processFriendRemoval(const QByteArray& str, qsizetype start);
+    qsizetype processGettingBlocked(const QByteArray& str, qsizetype start);
+    qsizetype processPersonBlocked(const QByteArray& str, qsizetype start);
+    qsizetype processListOfStrangers(const QByteArray& str, qsizetype start);
+    qsizetype processUserUnblocked(const QByteArray& str, qsizetype start);
+    qsizetype processUserUnblockedYou(const QByteArray& str, qsizetype start);
+    qsizetype processNewChatName(const QByteArray& str, qsizetype start);
+    qsizetype processGroupMemberRemoval(const QByteArray& str, qsizetype start);
+    qsizetype processNewGroupMembers(const QByteArray& str, qsizetype start);
+    qsizetype processNecessaryContacts(const QByteArray& str, qsizetype start);
+    qsizetype processNewAdmin(const QByteArray& str, qsizetype start);
+    qsizetype processFriendStatus(const QByteArray& str, qsizetype start);
+    qsizetype processNewUploadId(const QByteArray& str, qsizetype start);
+    qsizetype processChunkStatus(const QByteArray& str, qsizetype start);
+    qsizetype processUploadName(const QByteArray& str, qsizetype start);
+    qsizetype processChunk(const QByteArray& str, qsizetype start);
+    qsizetype processFileIncomingFileInfo(const QByteArray& str, qsizetype start);
     void reset();
 signals:
     //request failures
@@ -52,8 +55,8 @@ signals:
     void chatDataReceived();
     void newFriendRequest();
     void newSearchData();
-    void createdNewChat(int id);
-    void addedToNewChat(int id);
+    void createdNewChat(qsizetype id);
+    void addedToNewChat(qsizetype id);
     void unknownListReceived();
     void allUserInfoReceived();
     void accountDataCleared();
@@ -62,6 +65,8 @@ private:
     MediaUploader& uploader;
     RequestSender& sender;
     MediaCache& mediaCache;
+    MediaHandler mediaHandler;
+
     bool userInfoReceived;
     std::vector<std::pair<int, int>> _awaitingContactInfoList;
 };

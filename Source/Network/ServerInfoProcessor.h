@@ -39,10 +39,10 @@
  *  */
 
 
-class ServerInfoProcessor : public QObject{
+class ConnectionHandler : public QObject{
     Q_OBJECT
 public:
-    ServerInfoProcessor(QObject* object = nullptr);
+    ConnectionHandler(QObject* object = nullptr);
     const QTcpSocket& socket() const;
 public slots:
     //this is all for messaging the server

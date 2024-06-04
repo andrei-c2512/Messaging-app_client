@@ -141,7 +141,7 @@ void RequestSender::addPeopleToGroup(int chatId, std::vector<int> idList)
 }
 void RequestSender::sendMedia(QByteArray fileName, QByteArray media)
 {
-    QByteArray cmdNum = QByteArray::number((int)RequestToServer::UploadMediaChunk);
+    QByteArray cmdNum = QByteArray::number((int)RequestToServer::MediaChunk);
     QByteArray cmd;
     cmd.reserve(cmdNum.size() + 3 + fileName.size() + media.size());
     cmd.append(cmdNum).append('(').append(std::move(fileName)).append(',').append(std::move(media)).append(')');

@@ -132,7 +132,7 @@ const std::vector<QUrl>& MediaScrollArea::mediaUrls() const {
 }
 
 
-ChatTextEdit::ChatTextEdit(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& combo, MediaScrollArea& mediaArea0)
+ChatTextEdit::ChatTextEdit(QWidget* parent, const ConnectionHandler& serverInfoProcessor0, KeywordCombo& combo, MediaScrollArea& mediaArea0)
     : STextEdit(parent, combo), serverInfoProcessor(serverInfoProcessor0), mediaArea(mediaArea0)
 {
     setPlaceholderText("Type...");
@@ -175,7 +175,7 @@ void ChatTextEdit::sendMedia()
     mediaArea.clear();
 }
 
-ChatMessageBar::ChatMessageBar(QWidget* parent, const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& keywordCombo0) 
+ChatMessageBar::ChatMessageBar(QWidget* parent, const ConnectionHandler& serverInfoProcessor0, KeywordCombo& keywordCombo0) 
     : QWidget(parent) , keywordCombo(keywordCombo0)
 {
     setupUi(serverInfoProcessor0 , keywordCombo0);
@@ -186,7 +186,7 @@ void ChatMessageBar::setCharacterLimit(int n) {
     _chLimit = n;
     pTextEdit->setCharacterLimit(n);
 }
-void ChatMessageBar::setupUi(const ServerInfoProcessor& serverInfoProcessor0, KeywordCombo& keywordCombo)
+void ChatMessageBar::setupUi(const ConnectionHandler& serverInfoProcessor0, KeywordCombo& keywordCombo)
 {
     QMargins noMargins(0, 0, 0, 0);
 
@@ -248,7 +248,7 @@ BlockUI::BlockUI(QWidget* parent) : QWidget(parent)
 {
     setupUi();
 }
-void BlockUI::setBlockMode(Mode mode, ContactInfo* info, ServerInfoProcessor& processor)
+void BlockUI::setBlockMode(Mode mode, ContactInfo* info, ConnectionHandler& processor)
 {
     pUnblockButton->disconnect();
     if (mode == Mode::YouAreBlocked)
@@ -302,7 +302,7 @@ void BlockUI::setupUi()
 }
 
 
-Chat::Chat(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor, UserSelectorWidget& widget, KeywordCombo& keywordCombo) 
+Chat::Chat(QWidget* parent, ConnectionHandler& ServerInfoProcessor, UserSelectorWidget& widget, KeywordCombo& keywordCombo) 
     : QWidget(parent) , processor(ServerInfoProcessor)
 {
     setupUi(keywordCombo);

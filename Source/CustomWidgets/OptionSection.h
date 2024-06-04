@@ -57,7 +57,7 @@ public:
         RequestList
     };
 public:
-    ChatListWidget(QWidget* parent , const ServerInfoProcessor& infoProcessor , SubpageManager& manager , Type type);
+    ChatListWidget(QWidget* parent , const ConnectionHandler& infoProcessor , SubpageManager& manager , Type type);
     void setTextVisible(bool visible);
 private:
     //void setServerInfoProcessor(const ServerInfoProcessor& infoProcessor);
@@ -71,7 +71,7 @@ private:
     void setupUi();
     QVBoxLayout* pScrollAreaLayout;
     //I would have the chatInfo list however I need the whole object so that it emits a signal when it receives new chat info
-    const ServerInfoProcessor& infoProcessor;
+    const ConnectionHandler& infoProcessor;
     SubpageManager& subpageManager;
     const std::vector<ChatInfo*>* chatInfo_list;
     //an array that memorizes the index of the chat in 'chatInfo_list' that is on the n-th place when it comes to how recent the last message of the chat was
@@ -87,7 +87,7 @@ private:
 class ChatListView : public QWidget{
     Q_OBJECT
 public:
-    ChatListView(QWidget* widget ,  const ServerInfoProcessor& infoProcessor , SubpageManager& manager);
+    ChatListView(QWidget* widget ,  const ConnectionHandler& infoProcessor , SubpageManager& manager);
     void setTextVisible(bool visible);
     void setList(ChatListWidget::Type type);
 public slots:
@@ -104,7 +104,7 @@ private:
 
     QStackedWidget* pStackedWidget;
 
-    const ServerInfoProcessor& serverProcessor;
+    const ConnectionHandler& serverProcessor;
     SubpageManager& subpageManager;
 };
 
@@ -112,7 +112,7 @@ private:
 class OptionSection : public QWidget{
     Q_OBJECT
 public:
-    OptionSection(QWidget* parent  , const ServerInfoProcessor& processor , SubpageManager& subpageManager0 , UserSelectorWidget& userSelectorWidget);
+    OptionSection(QWidget* parent  , const ConnectionHandler& processor , SubpageManager& subpageManager0 , UserSelectorWidget& userSelectorWidget);
     int minimumWidth() const;
     int maximumWidth() const;
     void setWidgetsVisible(bool visible);
@@ -140,7 +140,7 @@ private:
     ProfileView*      pProfileView;
     ChatListView*     pListView;
 
-    const ServerInfoProcessor& serverProcessor;
+    const ConnectionHandler& serverProcessor;
     SubpageManager &            subpageManager;
     int _minimumWidth;
     int _maximumWidth;
@@ -152,7 +152,7 @@ private:
 class OptionSectionFrame : public QWidget{
     Q_OBJECT
 public:
-    OptionSectionFrame(QWidget* parent ,  const ServerInfoProcessor& processor , SubpageManager& pSubpageManager0 , UserSelectorWidget& userSelectorWidget);
+    OptionSectionFrame(QWidget* parent ,  const ConnectionHandler& processor , SubpageManager& pSubpageManager0 , UserSelectorWidget& userSelectorWidget);
 protected:
     void resizeEvent(QResizeEvent* event) override;
 private:

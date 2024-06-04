@@ -1,6 +1,6 @@
 #include "PageManager.h"
 
-PageManager::PageManager(QWidget* parent , ServerInfoProcessor& serverInfoProcessor0 , UserSelectorWidget& userSelectorWidget, KeywordCombo& keywordCombo)
+PageManager::PageManager(QWidget* parent , ConnectionHandler& serverInfoProcessor0 , UserSelectorWidget& userSelectorWidget, KeywordCombo& keywordCombo)
     :QStackedWidget(parent) , serverInfoProcessor(serverInfoProcessor0)
 {
     setupUi(userSelectorWidget , keywordCombo);

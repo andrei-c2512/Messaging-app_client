@@ -2,7 +2,7 @@
 
 
 
-MainPage::MainPage(QWidget* parent , ServerInfoProcessor& processor  , UserSelectorWidget& userSelectorWidget , KeywordCombo& keywordCombo)
+MainPage::MainPage(QWidget* parent , ConnectionHandler& processor  , UserSelectorWidget& userSelectorWidget , KeywordCombo& keywordCombo)
     :Page(parent , processor)
 {
     setupUi(userSelectorWidget , keywordCombo);

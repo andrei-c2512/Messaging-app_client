@@ -3,12 +3,12 @@
 #include "Tools.h"
 
 
-MembersSection::MembersSection(QWidget* parent, ServerInfoProcessor& ServerInfoProcessor) : QScrollArea(parent) , processor(ServerInfoProcessor)
+MembersSection::MembersSection(QWidget* parent, ConnectionHandler& ServerInfoProcessor) : QScrollArea(parent) , processor(ServerInfoProcessor)
 {
     setupUi();
     setObjectName("SelectorContactList");
 }
-void MembersSection::setContactList(std::vector<int> contactIdList, ServerInfoProcessor& processor, Chat& page,  int adminId)
+void MembersSection::setContactList(std::vector<int> contactIdList, ConnectionHandler& processor, Chat& page,  int adminId)
 {
     auto contactList = processor.storage().findUsers(contactIdList);
     short dif = short(_viewList.size()) - short(contactList.size());
@@ -134,7 +134,7 @@ void MembersSection::setAdmin(int adminId)
 
 
 
-ChatPage::ChatPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor , UserSelectorWidget& widget, KeywordCombo& keywordCombo) : Page(parent , ServerInfoProcessor) , userSelector(widget)
+ChatPage::ChatPage(QWidget* parent , ConnectionHandler& ServerInfoProcessor , UserSelectorWidget& widget, KeywordCombo& keywordCombo) : Page(parent , ServerInfoProcessor) , userSelector(widget)
 {
     setupUi(widget , keywordCombo);
     pInfo = nullptr;

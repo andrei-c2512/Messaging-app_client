@@ -130,7 +130,7 @@ ContactView_MembersSection::ContactView_MembersSection(QWidget* parent) : Contac
 	pOptions = nullptr;
 }
 void ContactView_MembersSection::setIsAdmin(bool admin) { pAdminCrown->setVisible(admin); }
-void ContactView_MembersSection::attatchOptions(ServerInfoProcessor& processor, Chat& page, GroupMemberOptions::Features flags)
+void ContactView_MembersSection::attatchOptions(ConnectionHandler& processor, Chat& page, GroupMemberOptions::Features flags)
 {
 	if (pOptions == nullptr)
 	{
@@ -145,7 +145,7 @@ void ContactView_MembersSection::attatchOptions(ServerInfoProcessor& processor, 
 	}
 	pLayout->addWidget(pOptions);
 }
-void ContactView_MembersSection::connectFluctuatingOptions(ServerInfoProcessor& processor, Chat& page, GroupMemberOptions::Features flags)
+void ContactView_MembersSection::connectFluctuatingOptions(ConnectionHandler& processor, Chat& page, GroupMemberOptions::Features flags)
 {
 	auto lastFeatures = pOptions->lastFeatures();
 	pOptions->pFriendAction->disconnect();
@@ -170,7 +170,7 @@ void ContactView_MembersSection::connectFluctuatingOptions(ServerInfoProcessor& 
 
 }
 
-void ContactView_MembersSection::connectOptionsInit(ServerInfoProcessor& processor, Chat& page, GroupMemberOptions::Features flags)
+void ContactView_MembersSection::connectOptionsInit(ConnectionHandler& processor, Chat& page, GroupMemberOptions::Features flags)
 {
 	connect(pOptions->pMessage, &QAction::triggered, this, [=, &page, &processor]() {
 		ChatInfo* chat = processor.storage().privateChatById(pInfo->id());

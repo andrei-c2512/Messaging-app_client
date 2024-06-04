@@ -1,6 +1,6 @@
 #include "LoadingPage.h"
 #include "StyleBase/StyleRepository.h"
-LoadingPage::LoadingPage(QWidget* parent , ServerInfoProcessor& pProcessor)
+LoadingPage::LoadingPage(QWidget* parent , ConnectionHandler& pProcessor)
     :Page(parent , pProcessor)
 {
     setupUi();

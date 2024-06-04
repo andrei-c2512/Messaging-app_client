@@ -30,7 +30,7 @@ public:
         MakeGroupChat, AddToGroupChat
     };
 public:
-	UserSelectorWidget(QWidget* parent , ServerInfoProcessor& processor);
+	UserSelectorWidget(QWidget* parent , ConnectionHandler& processor);
     void launch(QPoint point , std::vector<ContactInfo*> contactList);
     void launch(QPoint point);
     void launch();
@@ -51,7 +51,7 @@ private:
 protected:
     void focusOutEvent(QFocusEvent* ev) override;
 private:
-    ServerInfoProcessor& processor;
+    ConnectionHandler& processor;
 
     QWidget* pWidget;
 	QVBoxLayout* pLayout;

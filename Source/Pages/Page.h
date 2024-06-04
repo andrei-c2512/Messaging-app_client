@@ -7,9 +7,9 @@
 class Page : public QWidget{
     Q_OBJECT
 public:
-    Page(QWidget* parent , ServerInfoProcessor& pServerInfoProcessor0);
+    Page(QWidget* parent , ConnectionHandler& pServerInfoProcessor0);
 protected:
-    ServerInfoProcessor& serverInfoProcessor;
+    ConnectionHandler& serverInfoProcessor;
 };
 
 #endif // PAGE_H

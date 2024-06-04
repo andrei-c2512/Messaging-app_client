@@ -7,7 +7,7 @@ ContactList::ContactList(QWidget* parent) : QScrollArea(parent)
     _loadLimit = 20;
     setObjectName("ContactList");
 }
-void ContactList::setContactList(std::vector<ContactInfo*> contactList , ServerInfoProcessor& processor, ChatPage& chatPage ,  
+void ContactList::setContactList(std::vector<ContactInfo*> contactList , ConnectionHandler& processor, ChatPage& chatPage ,  
     QStackedWidget& stackedW, SearchType type , bool isSearchBarEmpty)
 {
     usedViews = (qint32)contactList.size();
@@ -150,7 +150,7 @@ void ContactList::updateLabel( bool isSearchBarEmpty)
 }
 
 
-SocialPage::SocialPage(QWidget* parent ,ServerInfoProcessor& pInfoProcessor0 , ChatPage& page, QStackedWidget& stackedWidget0) 
+SocialPage::SocialPage(QWidget* parent ,ConnectionHandler& pInfoProcessor0 , ChatPage& page, QStackedWidget& stackedWidget0) 
     : Page(parent , pInfoProcessor0) , chatPage(page) , stackedWidget(stackedWidget0)
 {
     _searchType = SearchType::FriendList;

@@ -115,7 +115,7 @@ ContactView_SocialPage::ContactView_SocialPage(QWidget* parent) : ContactView(pa
     optionList.resize(int(SearchType::Count), nullptr);
     pLayout->addStretch(1);
 }
-void ContactView_SocialPage::attatchOptions(SearchType type, ServerInfoProcessor& processor, ChatPage& page, QStackedWidget& widget)
+void ContactView_SocialPage::attatchOptions(SearchType type, ConnectionHandler& processor, ChatPage& page, QStackedWidget& widget)
 {
     if (pOptions)
         pOptions->setVisible(false);
@@ -150,7 +150,7 @@ void ContactView_SocialPage::attatchOptions(SearchType type, ServerInfoProcessor
     pOptions->setVisible(true);
 }
 
-void ContactView_SocialPage::connectOptions(SearchType type, ServerInfoProcessor& processor, ChatPage& page, QStackedWidget& widget)
+void ContactView_SocialPage::connectOptions(SearchType type, ConnectionHandler& processor, ChatPage& page, QStackedWidget& widget)
 {
     switch (type)
     {
@@ -169,7 +169,7 @@ void ContactView_SocialPage::connectOptions(SearchType type, ServerInfoProcessor
     }
 }
 
-void ContactView_SocialPage::connectFriendOptions(ServerInfoProcessor& processor, ChatPage& page, QStackedWidget& widget)
+void ContactView_SocialPage::connectFriendOptions(ConnectionHandler& processor, ChatPage& page, QStackedWidget& widget)
 {
     FriendOptions* w = static_cast<FriendOptions*>(optionList[int(SearchType::FriendList)]);
     w->disconnectAll();
@@ -194,7 +194,7 @@ void ContactView_SocialPage::connectFriendOptions(ServerInfoProcessor& processor
         emit remove(pInfo->id());
         });
 }
-void ContactView_SocialPage::connectStrangerOptions(ServerInfoProcessor& processor)
+void ContactView_SocialPage::connectStrangerOptions(ConnectionHandler& processor)
 {
     StrangerOptions* w = static_cast<StrangerOptions*>(optionList[int(SearchType::AddFriend)]);
     w->disconnectAll();
@@ -210,7 +210,7 @@ void ContactView_SocialPage::connectStrangerOptions(ServerInfoProcessor& process
         }
             });
 }
-void ContactView_SocialPage::connectRequestOptions(ServerInfoProcessor& processor)
+void ContactView_SocialPage::connectRequestOptions(ConnectionHandler& processor)
 {
     RequestOptions* w = static_cast<RequestOptions*>(optionList[int(SearchType::RequestList)]);
     w->disconnectAll();
@@ -229,7 +229,7 @@ void ContactView_SocialPage::connectRequestOptions(ServerInfoProcessor& processo
     deleteLater();
         });
 }
-void ContactView_SocialPage::connectBlockedOptions(ServerInfoProcessor& processor)
+void ContactView_SocialPage::connectBlockedOptions(ConnectionHandler& processor)
 {
     CustomButton* btn = static_cast<CustomButton*>(optionList[int(SearchType::BlockedList)]);
     btn->disconnect();
@@ -241,7 +241,7 @@ void ContactView_SocialPage::connectBlockedOptions(ServerInfoProcessor& processo
 }
 
 
-QWidget* ContactView_SocialPage::friendOptions(ServerInfoProcessor& processor, ChatPage& page, QStackedWidget& widget)
+QWidget* ContactView_SocialPage::friendOptions(ConnectionHandler& processor, ChatPage& page, QStackedWidget& widget)
 {
     FriendOptions* w = new FriendOptions;
     CustomButton& messageBtn = w->sendMessageBtn();
@@ -268,7 +268,7 @@ QWidget* ContactView_SocialPage::friendOptions(ServerInfoProcessor& processor, C
     optionList[int(SearchType::FriendList)] = w;
     return w;
 }
-QWidget* ContactView_SocialPage::strangerOptions(ServerInfoProcessor& processor)
+QWidget* ContactView_SocialPage::strangerOptions(ConnectionHandler& processor)
 {
     StrangerOptions* w = new StrangerOptions;
     TwoStateButton& btn = w->addFriendBtn();
@@ -285,7 +285,7 @@ QWidget* ContactView_SocialPage::strangerOptions(ServerInfoProcessor& processor)
     optionList[int(SearchType::AddFriend)] = w;
     return w;
 }
-QWidget* ContactView_SocialPage::requestOptions(ServerInfoProcessor& processor)
+QWidget* ContactView_SocialPage::requestOptions(ConnectionHandler& processor)
 {
     RequestOptions* w = new RequestOptions;
     connect(&w->acceptBtn(), &CustomButton::clicked, this, [=, &processor]() {
@@ -305,7 +305,7 @@ QWidget* ContactView_SocialPage::requestOptions(ServerInfoProcessor& processor)
     optionList[int(SearchType::RequestList)] = w;
     return w;
 }
-QWidget* ContactView_SocialPage::blockedOptions(ServerInfoProcessor& processor)
+QWidget* ContactView_SocialPage::blockedOptions(ConnectionHandler& processor)
 {
     QWidget* w = new QWidget;
     optionList[int(SearchType::RequestList)] = w;

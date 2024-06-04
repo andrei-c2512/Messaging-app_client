@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     pEffect = new BackgroundShiftOnMouseEffect(this, QPixmap(":/Images/Images/Background/GreenSpace.png"), 3);
     pEffect->setGeometry(QRect(QPoint(0 , 0) , screenSize));
-    pServerInfoProcessor = new ServerInfoProcessor(this);
+    pServerInfoProcessor = new ConnectionHandler(this);
     installEventFilter(this);
 
     pSelectorWidget = new UserSelectorWidget(nullptr, *pServerInfoProcessor);

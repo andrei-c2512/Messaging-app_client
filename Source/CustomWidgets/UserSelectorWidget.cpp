@@ -81,7 +81,7 @@ std::vector<int> SelectorContactList::checkedUsers() const
 }
 
 
-UserSelectorWidget::UserSelectorWidget(QWidget* parent, ServerInfoProcessor& processor0) :QMdiSubWindow(parent , Qt::FramelessWindowHint | Qt::Popup) , processor(processor0)
+UserSelectorWidget::UserSelectorWidget(QWidget* parent, ConnectionHandler& processor0) :QMdiSubWindow(parent , Qt::FramelessWindowHint | Qt::Popup) , processor(processor0)
 {
     setAttribute(Qt::WA_StyledBackground);
     setFocusPolicy(Qt::ClickFocus);

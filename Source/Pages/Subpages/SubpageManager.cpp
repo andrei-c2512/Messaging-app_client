@@ -1,6 +1,6 @@
 #include "SubpageManager.h"
 
-SubpageManager::SubpageManager(QWidget* parent , ServerInfoProcessor& infoProcessor0 , UserSelectorWidget& userSelector, KeywordCombo& keywordCombo)
+SubpageManager::SubpageManager(QWidget* parent , ConnectionHandler& infoProcessor0 , UserSelectorWidget& userSelector, KeywordCombo& keywordCombo)
     :QStackedWidget(parent) , infoProcessor(infoProcessor0)
 {
     subPage_list = { new ChatPage(nullptr , infoProcessor , userSelector , keywordCombo)};

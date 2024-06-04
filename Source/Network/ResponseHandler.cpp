@@ -8,16 +8,16 @@ ResponseHandler::ResponseHandler(QObject* parent, AccountInfoStorage& storage0, 
     : QObject(parent), storage(storage0) , uploader(uploader0) , sender(sender0), mediaCache(cache0)
 {}
 
-int ResponseHandler::processCommand(const QString& message, int start)
+qsizetype ResponseHandler::processCommand(const QByteArray& message, qsizetype start)
 {
-    int end = start;
+    qsizetype end = start;
     try {
-        int requestCodeBegin = message.indexOf(commandBegin, start) + commandBegin.size();
-        int requestCodeEnd = message.indexOf(':', start);
+        qsizetype requestCodeBegin = message.indexOf(commandBegin, start) + commandBegin.size();
+        qsizetype requestCodeEnd = message.indexOf(':', start);
 
-        QString code = message.mid(requestCodeBegin, requestCodeEnd - requestCodeBegin);
+        QByteArray code = message.mid(requestCodeBegin, requestCodeEnd - requestCodeBegin);
         qDebug() << "Request code: " << code;
-        int codeNumber;
+        qsizetype codeNumber;
         //the index of the end of the current command
         if (code[0] == 'F')
         {
@@ -66,7 +66,7 @@ int ResponseHandler::processCommand(const QString& message, int start)
                 mediaCache.setDirName(storage.name());
                 emit signInAccepted();
                 break;
-            case InfoFromServer::Chats:
+            case InfoFromServer::ChatInfo:
                 end = processChatListInfo(message, start);
                 emit chatDataReceived();
                 break;
@@ -125,7 +125,7 @@ int ResponseHandler::processCommand(const QString& message, int start)
             case InfoFromServer::GroupMemberRemoved:
                 end = processGroupMemberRemoval(message, start);
                 break;
-            case InfoFromServer::GroupMemberAdded:
+            case InfoFromServer::GroupMembersAdded:
                 end = processNewGroupMembers(message, start);
                 sender.requestDataOfWaitingUsers(_awaitingContactInfoList);
                 break;
@@ -138,14 +138,20 @@ int ResponseHandler::processCommand(const QString& message, int start)
             case InfoFromServer::FriendStatus:
                 end = processFriendStatus(message, start);
                 break;
-            case InfoFromServer::UploadId:
+            case InfoFromServer::MediaUploadId:
                 end = processNewUploadId(message, start);
                 break;
-            case InfoFromServer::ChunkAccepted:
-                end = processChunkStatus(message, start);
-                break;
+            //case InfoFromServer::UploadChunkAccepted:
+            //    end = processChunkStatus(message, start);
+            //    break;
             case InfoFromServer::FileName:
                 end = processUploadName(message, start);
+                break;
+            case InfoFromServer::IncomingFile:
+                end = processFileIncomingFileInfo(message, start);
+                break;
+            case InfoFromServer::FileChunk:
+                end = processChunk(message, start);
                 break;
             default:
                 qDebug() << "Received unkown message";
@@ -159,7 +165,7 @@ int ResponseHandler::processCommand(const QString& message, int start)
         }
         else
         {
-            QString error_message = QString("Did not encounter a known command type -> ") + code[0];
+            QByteArray error_message = QByteArray("Did not encounter a known command type -> ") + code[0];
             throw std::logic_error(error_message.toStdString());
         }
     }
@@ -169,9 +175,35 @@ int ResponseHandler::processCommand(const QString& message, int start)
     return end;
 }
 
-int ResponseHandler::processChunkStatus(const QString& str, int start)
+qsizetype ResponseHandler::processChunk(const QByteArray& str, qsizetype start)
 {
-    int statusPos = str.indexOf(upload_acceptedSep, start) + upload_acceptedSep.length();
+    qsizetype chunkPos = dataPos(str, upload_blobSep , start);
+    qsizetype end = str.length() - commandEnd.length() - 1;
+
+    QByteArray chunk = str.sliced(chunkPos , end - chunkPos);
+
+    mediaHandler.addBlob(std::move(chunk));
+
+    return str.indexOf(commandEnd, end) + commandEnd.length();
+}
+qsizetype ResponseHandler::processFileIncomingFileInfo(const QByteArray& str, qsizetype start)
+{
+    qsizetype namePos = dataPos(str, upload_nameSep, start);
+    qsizetype extensionPos = dataPos(str, upload_extensionSep, namePos);
+    qsizetype fileSizePos = dataPos(str, upload_fileSizeSep, extensionPos);
+
+    QByteArray name = TextParser::extractData(str, namePos);
+    qsizetype extension = extractData(str, extensionPos).toInt();
+    qsizetype fileSize = extractData(str, fileSizePos).toULongLong();
+
+    mediaHandler.prepareNewMedia(name, extension, fileSize);
+
+    return str.indexOf(commandEnd, fileSizePos) + commandEnd.length();
+}
+
+qsizetype ResponseHandler::processChunkStatus(const QByteArray& str, qsizetype start)
+{
+    qsizetype statusPos = str.indexOf(upload_acceptedSep, start) + upload_acceptedSep.length();
     bool accepted = str[statusPos + 1] == 't';
 
     if (accepted)
@@ -179,12 +211,12 @@ int ResponseHandler::processChunkStatus(const QString& str, int start)
 
     return str.indexOf(commandEnd, statusPos) + commandEnd.length();
 }
-int ResponseHandler::processNewGroupMembers(const QString& str, int start)
+qsizetype ResponseHandler::processNewGroupMembers(const QByteArray& str, qsizetype start)
 {
-    int chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
-    int idListPos = str.indexOf(chat_newMembersSep, chatIdPos) + chat_newMembersSep.length();
+    qsizetype chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
+    qsizetype idListPos = str.indexOf(chat_newMembersSep, chatIdPos) + chat_newMembersSep.length();
 
-    int chatId = str.mid(chatIdPos + 1, str.indexOf('"', chatIdPos + 1) - chatIdPos - 1).toInt();
+    qsizetype chatId = str.mid(chatIdPos + 1, str.indexOf('"', chatIdPos + 1) - chatIdPos - 1).toInt();
     std::vector<int> list = Tools::extractIntsFromArr(str.mid(idListPos + 1, str.indexOf('"', idListPos + 1) - idListPos - 1));
 
     ChatInfo* chatInfo = storage.chatById(chatId);
@@ -199,21 +231,21 @@ int ResponseHandler::processNewGroupMembers(const QString& str, int start)
 
     return str.indexOf(commandEnd, idListPos) + commandEnd.length();
 }
-int ResponseHandler::processNewUploadId(const QString& str, int start)
+qsizetype ResponseHandler::processNewUploadId(const QByteArray& str, qsizetype start)
 {
-    int idPos = str.indexOf(upload_idSep, start) + upload_idSep.length();
-    QString id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
+    qsizetype idPos = str.indexOf(upload_idSep, start) + upload_idSep.length();
+    QByteArray id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
 
     uploader.nextMedia(id);
     return str.indexOf(commandEnd, idPos) + commandEnd.length();
 }
-int ResponseHandler::processNewChatName(const QString& str, int start)
+qsizetype ResponseHandler::processNewChatName(const QByteArray& str, qsizetype start)
 {
-    int idPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
-    int namePos = str.indexOf(chat_nameSep, idPos) + chat_nameSep.length();
+    qsizetype idPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
+    qsizetype namePos = str.indexOf(chat_nameSep, idPos) + chat_nameSep.length();
 
     int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
-    QString newName = str.mid(namePos + 1, str.indexOf('"', namePos + 1) - namePos - 1);
+    QByteArray newName = str.mid(namePos + 1, str.indexOf('"', namePos + 1) - namePos - 1);
 
     ChatInfo* chat = storage.chatById(id);
     //new name emits a signal so that it announces the change , the other method does not
@@ -221,9 +253,9 @@ int ResponseHandler::processNewChatName(const QString& str, int start)
 
     return str.indexOf(commandEnd, namePos) + commandEnd.length();
 }
-int ResponseHandler::processUserUnblocked(const QString& str, int start)
+qsizetype ResponseHandler::processUserUnblocked(const QByteArray& str, qsizetype start)
 {
-    int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
+    qsizetype idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
     int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
 
     ContactInfo* info = storage.findUser(id);
@@ -238,9 +270,9 @@ int ResponseHandler::processUserUnblocked(const QString& str, int start)
 
     return str.indexOf(commandEnd, idPos) + commandEnd.length();
 }
-int ResponseHandler::processUserUnblockedYou(const QString& str, int start)
+qsizetype ResponseHandler::processUserUnblockedYou(const QByteArray& str, qsizetype start)
 {
-    int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
+    qsizetype idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
     int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
 
     ContactInfo* info = storage.findUser(id);
@@ -255,14 +287,14 @@ int ResponseHandler::processUserUnblockedYou(const QString& str, int start)
 
     return str.indexOf(commandEnd, idPos) + commandEnd.length();
 }
-int ResponseHandler::processGroupMemberRemoval(const QString& str, int start)
+qsizetype ResponseHandler::processGroupMemberRemoval(const QByteArray& str, qsizetype start)
 {
-    int chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
-    int contactIdPos = str.indexOf(contact_idSep, chatIdPos) + contact_idSep.length();
-    int chatRemovalStatusPos = str.indexOf(chat_removedSep, contactIdPos) + chat_removedSep.length();
+    qsizetype chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
+    qsizetype contactIdPos = str.indexOf(contact_idSep, chatIdPos) + contact_idSep.length();
+    qsizetype chatRemovalStatusPos = str.indexOf(chat_removedSep, contactIdPos) + chat_removedSep.length();
 
-    int chatId = str.mid(chatIdPos + 1, str.indexOf('"', chatIdPos + 1) - chatIdPos - 1).toInt();
-    int contactId = str.mid(contactIdPos + 1, str.indexOf('"', contactIdPos + 1) - contactIdPos - 1).toInt();
+    qsizetype chatId = str.mid(chatIdPos + 1, str.indexOf('"', chatIdPos + 1) - chatIdPos - 1).toInt();
+    qsizetype contactId = str.mid(contactIdPos + 1, str.indexOf('"', contactIdPos + 1) - contactIdPos - 1).toInt();
     bool removed = str[chatRemovalStatusPos + 1] == 't';
 
     ChatInfo* info = storage.chatById(chatId);
@@ -270,13 +302,13 @@ int ResponseHandler::processGroupMemberRemoval(const QString& str, int start)
 
     return str.indexOf(commandEnd, contactId) + commandEnd.length();
 }
-int ResponseHandler::processListOfStrangers(const QString& str, int start)
+qsizetype ResponseHandler::processListOfStrangers(const QByteArray& str, qsizetype start)
 {
     std::function<void(ContactInfo*)> verify;
     if (_awaitingContactInfoList.size())
     {
         verify = [=](ContactInfo* info) {
-            for (int i = 0; i < _awaitingContactInfoList.size(); i++)
+            for (qsizetype i = 0; i < _awaitingContactInfoList.size(); i++)
             {
                 if (info->id() == _awaitingContactInfoList[i].first)
                 {
@@ -297,7 +329,7 @@ int ResponseHandler::processListOfStrangers(const QString& str, int start)
 
     //this was before adding the flag macros
     std::vector<ContactInfo*> vec;
-    int idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
+    qsizetype idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
     start = str.indexOf(contact_idSep, start);
     while (start != -1)
     {
@@ -324,7 +356,7 @@ int ResponseHandler::processListOfStrangers(const QString& str, int start)
             ContactInfo::Status(flags),
             str.mid(lastSeenPos + 1, str.indexOf('"', lastSeenPos + 1) - lastSeenPos - 1));
 
-        QString aux = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
+        QByteArray aux = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
         contact->setId(aux.toInt());
 
         vec.emplace_back(contact);
@@ -342,9 +374,9 @@ int ResponseHandler::processListOfStrangers(const QString& str, int start)
     }
     return str.indexOf(commandEnd, hasRequestPos);
 }
-int ResponseHandler::processPersonBlocked(const QString& str, int start)
+qsizetype ResponseHandler::processPersonBlocked(const QByteArray& str, qsizetype start)
 {
-    int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
+    qsizetype idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
     int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
 
     ContactInfo* info = storage.findUser(id);
@@ -354,9 +386,9 @@ int ResponseHandler::processPersonBlocked(const QString& str, int start)
 
     return str.indexOf(commandEnd, start) + commandEnd.length();
 }
-int ResponseHandler::processGettingBlocked(const QString& str, int start)
+qsizetype ResponseHandler::processGettingBlocked(const QByteArray& str, qsizetype start)
 {
-    int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
+    qsizetype idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
     int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
 
     ContactInfo* info = storage.findUser(id);
@@ -371,19 +403,19 @@ int ResponseHandler::processGettingBlocked(const QString& str, int start)
 
     return str.indexOf(commandEnd, start) + commandEnd.length();
 }
-int ResponseHandler::processNewChat(const QString& str, int start)
+qsizetype ResponseHandler::processNewChat(const QByteArray& str, qsizetype start)
 {
-    int idPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
-    int namePos = str.indexOf(chat_nameSep, idPos) + chat_nameSep.length();
-    int historyPos = str.indexOf(chat_historySep, namePos) + chat_historySep.length();
-    int memberlistPos = str.indexOf(chat_memberListSep, historyPos) + chat_memberListSep.length();
-    int privatePos = str.indexOf(chat_privateSep, memberlistPos) + chat_privateSep.length();
-    int adminPos = str.indexOf(chat_adminIdSep, privatePos) + chat_adminIdSep.length();
-    int readOnlyListPos = str.indexOf(chat_readOnlyListSep, adminPos) + chat_readOnlyListSep.length();
-    int isSenderPos = str.indexOf(chat_isSenderSep, privatePos) + chat_isSenderSep.length();
+    qsizetype idPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
+    qsizetype namePos = str.indexOf(chat_nameSep, idPos) + chat_nameSep.length();
+    qsizetype historyPos = str.indexOf(chat_historySep, namePos) + chat_historySep.length();
+    qsizetype memberlistPos = str.indexOf(chat_memberListSep, historyPos) + chat_memberListSep.length();
+    qsizetype privatePos = str.indexOf(chat_privateSep, memberlistPos) + chat_privateSep.length();
+    qsizetype adminPos = str.indexOf(chat_adminIdSep, privatePos) + chat_adminIdSep.length();
+    qsizetype readOnlyListPos = str.indexOf(chat_readOnlyListSep, adminPos) + chat_readOnlyListSep.length();
+    qsizetype isSenderPos = str.indexOf(chat_isSenderSep, privatePos) + chat_isSenderSep.length();
 
     ChatInfo* info = new ChatInfo(this);
-    int chatId = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
+    qsizetype chatId = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
     info->setId(chatId);
     info->setName(str.mid(namePos + 1, str.indexOf('"', namePos + 1) - namePos - 1));
     info->setMessageHistory(extractHistoryFromChat(str, historyPos));
@@ -419,7 +451,7 @@ int ResponseHandler::processNewChat(const QString& str, int start)
 
     return str.indexOf(commandEnd, isSenderPos) + commandEnd.length();
 }
-std::pair<ChatInfo*, int> ResponseHandler::processChatInfo(const QString& str, int start)
+std::pair<ChatInfo*, int> ResponseHandler::processChatInfo(const QByteArray& str, qsizetype start)
 {
     /* example of chat info data
      * ~I1:"Id":"2""Name":"Group chat3""History":{"(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")","(Leo,\"Ce te pisi atata\",\"2021-04-05 00:00:00\")"}
@@ -429,21 +461,21 @@ std::pair<ChatInfo*, int> ResponseHandler::processChatInfo(const QString& str, i
      * "(\"Leo Gabriel\",\"Ce te pisi atata\",\"2021-04-05 00:00:00\")"}"MemberList":"{1,2,5}"\~
      * */
 
-    int pos = start;
+    qsizetype pos = start;
 
     ChatInfo* chatInfo = new ChatInfo(this);
     //while(lastPos < pos)
     {
-        int idIndex = str.indexOf(chat_idSep, pos) + chat_idSep.length();
-        int nameIndex = str.indexOf(chat_nameSep, idIndex) + chat_nameSep.length();
-        int historyIndex = str.indexOf(chat_historySep, nameIndex) + chat_historySep.length();
-        int isPrivateIndex = str.indexOf(chat_privateSep, historyIndex) + chat_privateSep.length();
-        int memberListIndex = str.indexOf(chat_memberListSep, isPrivateIndex) + chat_memberListSep.length();
-        int adminIndex = str.indexOf(chat_adminIdSep, memberListIndex) + chat_adminIdSep.length();
-        int readOnlyListIndex = str.indexOf(chat_readOnlyListSep, adminIndex) + chat_readOnlyListSep.length();
+        qsizetype idIndex = str.indexOf(chat_idSep, pos) + chat_idSep.length();
+        qsizetype nameIndex = str.indexOf(chat_nameSep, idIndex) + chat_nameSep.length();
+        qsizetype historyIndex = str.indexOf(chat_historySep, nameIndex) + chat_historySep.length();
+        qsizetype isPrivateIndex = str.indexOf(chat_privateSep, historyIndex) + chat_privateSep.length();
+        qsizetype memberListIndex = str.indexOf(chat_memberListSep, isPrivateIndex) + chat_memberListSep.length();
+        qsizetype adminIndex = str.indexOf(chat_adminIdSep, memberListIndex) + chat_adminIdSep.length();
+        qsizetype readOnlyListIndex = str.indexOf(chat_readOnlyListSep, adminIndex) + chat_readOnlyListSep.length();
 
         //added 2 because ":"" (of length 2) will always follow after nameSep
-        QString auW = str.mid(idIndex + 1, str.indexOf('"', idIndex + 1) - idIndex - 1);
+        QByteArray auW = str.mid(idIndex + 1, str.indexOf('"', idIndex + 1) - idIndex - 1);
         chatInfo->setId(str.mid(idIndex + 1, str.indexOf('"', idIndex + 1) - idIndex - 1).toInt());
         chatInfo->setName(str.mid(nameIndex + 1, str.indexOf('"', nameIndex + 1) - nameIndex - 1));
         chatInfo->setMessageHistory(extractHistoryFromChat(str, historyIndex));
@@ -461,9 +493,9 @@ std::pair<ChatInfo*, int> ResponseHandler::processChatInfo(const QString& str, i
 
     return { chatInfo , pos };
 }
-int ResponseHandler::processNewFriendRequest(const QString& str, int start)
+qsizetype ResponseHandler::processNewFriendRequest(const QByteArray& str, qsizetype start)
 {
-    int idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
+    qsizetype idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
     start = str.indexOf(contact_idSep, start);
 
     {
@@ -481,7 +513,7 @@ int ResponseHandler::processNewFriendRequest(const QString& str, int start)
             ContactInfo::Status(int(str[onlinePos + 1] == 't')),
             str.mid(lastSeenPos + 1, str.indexOf('"', lastSeenPos + 1) - lastSeenPos - 1));
 
-        QString aux = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
+        QByteArray aux = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
         contact->setId(aux.toInt());
 
         ContactInfo::ContactStatus flags = ContactInfo::Status::Null;
@@ -497,17 +529,17 @@ int ResponseHandler::processNewFriendRequest(const QString& str, int start)
     }
     return str.indexOf(commandEnd, hasRequestPos) + commandEnd.length();
 }
-int ResponseHandler::processSignInInfo(const QString& str, int start)
+qsizetype ResponseHandler::processSignInInfo(const QByteArray& str, qsizetype start)
 {
-    int userIdStart = str.indexOf(user_idSep, start) + user_idSep.length() + 1;
-    QString userIdStr = str.mid(userIdStart, str.indexOf('"', userIdStart + 1) - userIdStart);
+    qsizetype userIdStart = str.indexOf(user_idSep, start) + user_idSep.length() + 1;
+    QByteArray userIdStr = str.mid(userIdStart, str.indexOf('"', userIdStart + 1) - userIdStart);
     storage.setId(userIdStr.toInt());
     return str.indexOf(commandEnd, start) + commandEnd.length();
 }
-int ResponseHandler::processSearchedForList(const QString& str, int start)
+qsizetype ResponseHandler::processSearchedForList(const QByteArray& str, qsizetype start)
 {
     std::vector<ContactInfo*> vec;
-    int idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
+    qsizetype idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
     start = str.indexOf(contact_idSep, start);
     while (start != -1)
     {
@@ -536,7 +568,7 @@ int ResponseHandler::processSearchedForList(const QString& str, int start)
             (ContactInfo::Status)flags,
             str.mid(lastSeenPos + 1, str.indexOf('"', lastSeenPos + 1) - lastSeenPos - 1));
 
-        QString aux = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
+        QByteArray aux = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
         contact->setId(aux.toInt());
 
 
@@ -556,14 +588,14 @@ int ResponseHandler::processSearchedForList(const QString& str, int start)
     }
     return str.indexOf(commandEnd, hasRequestPos);
 }
-int ResponseHandler::processNewMessageInfo(const QString& str, int start)
+qsizetype ResponseHandler::processNewMessageInfo(const QByteArray& str, qsizetype start)
 {
     // how the data looks like
-    /*   (commandBegin + 'I' + QString::number((int)InfoToClient::NewMessage) + ':' +
+    /*   (commandBegin + 'I' + QByteArray::number((int)InfoToClient::NewMessage) + ':' +
                 "\"Name\":" + "\"" + sender + "\"" + "\"Text\":" + "\"" + text + "\"" + "\"Timestamp\":" + "\"" + timestamp + "\"" + commandEnd);*/
 
                 // + 2 because of the characters ':' and '"'
-    int chatIdBegin = str.indexOf(message_chatIdSep, start) + message_chatIdSep.length();
+    qsizetype chatIdBegin = str.indexOf(message_chatIdSep, start) + message_chatIdSep.length();
 
     ChatInfo& info = storage.getChatById(/* extracting the chatId from the string and converting it to Integer*/
         str.mid(chatIdBegin + 1, str.indexOf('"', chatIdBegin + 1) - (chatIdBegin + 1)).toInt()
@@ -588,15 +620,15 @@ int ResponseHandler::processNewMessageInfo(const QString& str, int start)
         return str.indexOf(commandEnd, chatIdBegin) + commandEnd.length();
     }
 }
-int ResponseHandler::processChatListInfo(const QString& str, int start)
+qsizetype ResponseHandler::processChatListInfo(const QByteArray& str, qsizetype start)
 {
-    int lastPos = -1;
-    int pos = start;
+    qsizetype lastPos = -1;
+    qsizetype pos = start;
 
 
     while (lastPos < pos)
     {
-        int chatListStart = str.indexOf(chat_idSep, pos);
+        qsizetype chatListStart = str.indexOf(chat_idSep, pos);
         if (chatListStart == -1)
             break;
         else
@@ -611,12 +643,12 @@ int ResponseHandler::processChatListInfo(const QString& str, int start)
     emit newChatData();
     return str.indexOf(commandEnd, pos) + commandEnd.length();
 }
-int ResponseHandler::processContactInfo(const QString& str, int start)
+qsizetype ResponseHandler::processContactInfo(const QByteArray& str, qsizetype start)
 {
-    int ownFriendListPos = str.indexOf(contactSeps[0], start) + contactSeps[0].length();
-    int requestListPos = str.indexOf(contactSeps[1], ownFriendListPos) + contactSeps[1].length();
-    int blockedListPos = str.indexOf(contactSeps[2], requestListPos) + contactSeps[2].length();
-    int endPos = str.indexOf(commandEnd, blockedListPos);
+    qsizetype ownFriendListPos = str.indexOf(contactSeps[0], start) + contactSeps[0].length();
+    qsizetype requestListPos = str.indexOf(contactSeps[1], ownFriendListPos) + contactSeps[1].length();
+    qsizetype blockedListPos = str.indexOf(contactSeps[2], requestListPos) + contactSeps[2].length();
+    qsizetype endPos = str.indexOf(commandEnd, blockedListPos);
 
     storage.setFriendList(processContactList(str, ownFriendListPos, requestListPos - contactSeps[1].length()));
     for (ContactInfo* fr : storage.friendList())
@@ -642,15 +674,15 @@ int ResponseHandler::processContactInfo(const QString& str, int start)
         });
     return endPos + commandEnd.length();
 }
-int ResponseHandler::processNecessaryContacts(const QString& str, int start)
+qsizetype ResponseHandler::processNecessaryContacts(const QByteArray& str, qsizetype start)
 {
     //beware , you did not intialize the friend id list
-    int end = str.indexOf(commandEnd, start) + commandEnd.length();
+    qsizetype end = str.indexOf(commandEnd, start) + commandEnd.length();
     start = str.indexOf(contact_idSep, start) + contact_idSep.length();
-    int last = 0;
+    qsizetype last = 0;
     while (start < end && start != -1 && last <= start)
     {
-        int idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
+        qsizetype idPos, namePos, friendListPos, onlinePos, lastSeenPos, isBlockedPos, hasRequestPos;
         idPos = start;
         namePos = str.indexOf(contact_nameSep, idPos) + contact_nameSep.length();
         friendListPos = str.indexOf(contact_friendListSep, namePos) + contact_friendListSep.length();
@@ -698,7 +730,7 @@ int ResponseHandler::processNecessaryContacts(const QString& str, int start)
     }
     return end;
 }
-std::vector<ContactInfo*>  ResponseHandler::processContactList(const QString& str, int start, int end)
+std::vector<ContactInfo*>  ResponseHandler::processContactList(const QByteArray& str, qsizetype start, qsizetype end)
 {
     //beware , you did not intialize the friend id list
     std::vector<ContactInfo*> vec;
@@ -715,7 +747,7 @@ std::vector<ContactInfo*>  ResponseHandler::processContactList(const QString& st
             (str[onlinePos + 1] == 't') ? ContactInfo::Status::Online : ContactInfo::Status::Null,
             str.mid(lastSeenPos + 1, str.indexOf('"', lastSeenPos + 1) - lastSeenPos - 1));
 
-        QString aux = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
+        QByteArray aux = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1);
         contact->setId(aux.toInt());
 
         vec.emplace_back(contact);
@@ -723,13 +755,13 @@ std::vector<ContactInfo*>  ResponseHandler::processContactList(const QString& st
     }
     return vec;
 }
-int ResponseHandler::processNewFriendInfo(const QString& str, int start)
+qsizetype ResponseHandler::processNewFriendInfo(const QByteArray& str, qsizetype start)
 {
-    int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
-    int namePos = str.indexOf(contact_nameSep, idPos) + contact_nameSep.length();
-    int onlinePos = str.indexOf(contact_onlineSep, namePos) + contact_onlineSep.length();
-    int lastSeenPos = str.indexOf(contact_lastSeenSep, onlinePos) + contact_lastSeenSep.length();
-    int friendListPos = str.indexOf(contact_friendListSep, lastSeenPos) + contact_friendListSep.length();
+    qsizetype idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
+    qsizetype namePos = str.indexOf(contact_nameSep, idPos) + contact_nameSep.length();
+    qsizetype onlinePos = str.indexOf(contact_onlineSep, namePos) + contact_onlineSep.length();
+    qsizetype lastSeenPos = str.indexOf(contact_lastSeenSep, onlinePos) + contact_lastSeenSep.length();
+    qsizetype friendListPos = str.indexOf(contact_friendListSep, lastSeenPos) + contact_friendListSep.length();
 
     ContactInfo* contact = new ContactInfo(this);
     contact->setId(str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt());
@@ -742,27 +774,27 @@ int ResponseHandler::processNewFriendInfo(const QString& str, int start)
     storage.addFriend(contact);
     return str.indexOf(commandEnd, friendListPos) + commandEnd.length();
 }
-int ResponseHandler::processNewAdmin(const QString& str, int start)
+qsizetype ResponseHandler::processNewAdmin(const QByteArray& str, qsizetype start)
 {
-    int chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
-    int contactIdPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
+    qsizetype chatIdPos = str.indexOf(chat_idSep, start) + chat_idSep.length();
+    qsizetype contactIdPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
 
-    int chatId = str.mid(chatIdPos + 1, str.indexOf('"', chatIdPos + 1) - chatIdPos - 1).toInt();
-    int contactId = str.mid(contactIdPos + 1, str.indexOf('"', contactIdPos + 1) - contactIdPos - 1).toInt();
+    qsizetype chatId = str.mid(chatIdPos + 1, str.indexOf('"', chatIdPos + 1) - chatIdPos - 1).toInt();
+    qsizetype contactId = str.mid(contactIdPos + 1, str.indexOf('"', contactIdPos + 1) - contactIdPos - 1).toInt();
 
     ChatInfo* chatInfo = storage.chatById(chatId);
     chatInfo->setNewAdmin(contactId);
 
     return str.indexOf(commandEnd, contactIdPos) + commandEnd.length();
 }
-std::vector<MessageInfo*> ResponseHandler::extractHistoryFromChat(const QString& str, int start)
+std::vector<MessageInfo*> ResponseHandler::extractHistoryFromChat(const QByteArray& str, qsizetype start)
 {
     /* example : {"(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")","(Leo,\"Ce te pisi atata\",\"2021-04-05 00:00:00\")"}
      * "\"" marks the beginning of a text while "\"" marks the end
      * However not all texts start like this , only those who contain a space
      * */
-    int pos = start;
-    int lastPos = -1;
+    qsizetype pos = start;
+    qsizetype lastPos = -1;
     std::vector<MessageInfo*>history;
     while (lastPos < pos)
     {
@@ -773,27 +805,27 @@ std::vector<MessageInfo*> ResponseHandler::extractHistoryFromChat(const QString&
     }
     return history;
 }
-std::pair<MessageInfo*, int> ResponseHandler::processMessageInfo(const QString& str, int start)
+std::pair<MessageInfo*, int> ResponseHandler::processMessageInfo(const QByteArray& str, qsizetype start)
 {
     /* example of a message: "(\"Andrei alexander\",\"Ha ba la baie\",\"2021-03-05 11:34:05\")"
      * */
-     /* int pos = start;
-     const QString paramSeparator = "\\\"";
+     /* qsizetype pos = start;
+     const QByteArray paramSeparator = "\\\"";
 
-     const int sepLength = paramSeparator.length();
+     const qsizetype sepLength = paramSeparator.length();
      MessageInfo* m = new MessageInfo(this);
 
      {
-         int paramBeg = str.indexOf(paramSeparator , pos);
-         int paramEnd = str.indexOf(paramSeparator , paramBeg + sepLength);
+         qsizetype paramBeg = str.indexOf(paramSeparator , pos);
+         qsizetype paramEnd = str.indexOf(paramSeparator , paramBeg + sepLength);
 
          m->setAt(i , str.mid(paramBeg + sepLength , paramEnd - paramBeg - sepLength));
 
          pos = paramEnd + sepLength;
      }
 
-     int paranthesesPos =  str.indexOf('(' , pos);
-     int accoladeEnd = str.indexOf('}' , pos);
+     qsizetype paranthesesPos =  str.indexOf('(' , pos);
+     qsizetype accoladeEnd = str.indexOf('}' , pos);
      if(accoladeEnd < paranthesesPos)
          return {m , -1};
      else
@@ -801,36 +833,36 @@ std::pair<MessageInfo*, int> ResponseHandler::processMessageInfo(const QString& 
 
     MessageInfo* m = new MessageInfo(this);
 
-    int nameBegin = dataPos(str, message_nameSep, start);
-    int textBegin = dataPos(str, message_textSep, nameBegin);
-    int timestampBegin = dataPos(str, message_timestampSep, textBegin);
-    int paranthesesEndPos = str.indexOf(')', timestampBegin);
+    qsizetype nameBegin = dataPos(str, message_nameSep, start);
+    qsizetype textBegin = dataPos(str, message_textSep, nameBegin);
+    qsizetype timestampBegin = dataPos(str, message_timestampSep, textBegin);
+    qsizetype paranthesesEndPos = str.indexOf(')', timestampBegin);
 
     m->setName(str.mid(nameBegin, textBegin - nameBegin - message_textSep.length()));
     m->setText(str.mid(textBegin, timestampBegin - textBegin - message_timestampSep.length()).replace("\\\"", "\""));
     /* the character ')' marks the end of the message*/
     m->setTimestamp(str.mid(timestampBegin, paranthesesEndPos - timestampBegin - 1));
 
-    int paranthesesBegPos = str.indexOf('(', timestampBegin);
-    int accoladeEnd = str.indexOf('}', timestampBegin);
+    qsizetype paranthesesBegPos = str.indexOf('(', timestampBegin);
+    qsizetype accoladeEnd = str.indexOf('}', timestampBegin);
     if (accoladeEnd < paranthesesBegPos)
         return { m , -1 };
     else
         return { m , str.indexOf('(' , paranthesesEndPos) };
 }
-int ResponseHandler::processFriendRemoval(const QString& str, int start)
+qsizetype ResponseHandler::processFriendRemoval(const QByteArray& str, qsizetype start)
 {
-    int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
+    qsizetype idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
     int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
 
     storage.removeFriend(id);
 
     return str.indexOf(commandEnd, idPos) + commandEnd.length();
 }
-int ResponseHandler::processFriendStatus(const QString& str, int start)
+qsizetype ResponseHandler::processFriendStatus(const QByteArray& str, qsizetype start)
 {
-    int idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
-    int onlinePos = str.indexOf(contact_onlineSep, idPos) + contact_onlineSep.length();
+    qsizetype idPos = str.indexOf(contact_idSep, start) + contact_idSep.length();
+    qsizetype onlinePos = str.indexOf(contact_onlineSep, idPos) + contact_onlineSep.length();
 
     int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
     bool online = str[onlinePos + 1] == 't';
@@ -844,13 +876,13 @@ int ResponseHandler::processFriendStatus(const QString& str, int start)
     return str.indexOf(commandEnd, onlinePos) + commandEnd.length();
 }
 
-int ResponseHandler::processUploadName(const QString& str, int start)
+qsizetype ResponseHandler::processUploadName(const QByteArray& str, qsizetype start)
 {
-    int idPos = str.indexOf(upload_idSep, start) + upload_idSep.length();
-    int uploadNamePos = str.indexOf(upload_nameSep, idPos) + upload_nameSep.length();
+    qsizetype idPos = str.indexOf(upload_idSep, start) + upload_idSep.length();
+    qsizetype uploadNamePos = str.indexOf(upload_nameSep, idPos) + upload_nameSep.length();
 
     int id = str.mid(idPos + 1, str.indexOf('"', idPos + 1) - idPos - 1).toInt();
-    QString name = str.mid(uploadNamePos + 1, str.indexOf('"', uploadNamePos + 1) - uploadNamePos - 1);
+    QByteArray name = str.mid(uploadNamePos + 1, str.indexOf('"', uploadNamePos + 1) - uploadNamePos - 1);
 
     UploadData media = uploader.readyMedia(id);
     ChatInfo* info = storage.chatById(media.chatId);

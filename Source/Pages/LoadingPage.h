@@ -11,7 +11,7 @@
 class LoadingPage : public Page{
     Q_OBJECT
 public:
-    LoadingPage(QWidget* parent , ServerInfoProcessor& pProcessor);
+    LoadingPage(QWidget* parent , ConnectionHandler& pProcessor);
 private:
     void setupUi();
 private:

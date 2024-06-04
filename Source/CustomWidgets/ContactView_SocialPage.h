@@ -68,18 +68,18 @@ private:
 class ContactView_SocialPage : public ContactView {
 public:
 	ContactView_SocialPage(QWidget* parent = nullptr);
-    void attatchOptions(SearchType optionType, ServerInfoProcessor& processor, ChatPage& page, QStackedWidget& widget);
+    void attatchOptions(SearchType optionType, ConnectionHandler& processor, ChatPage& page, QStackedWidget& widget);
 private:
-    [[nodiscard]] QWidget* friendOptions(ServerInfoProcessor& processor, ChatPage& page, QStackedWidget& widget);
-    [[nodiscard]] QWidget* strangerOptions(ServerInfoProcessor& processor);
-    [[nodiscard]] QWidget* requestOptions(ServerInfoProcessor& processor);
-    [[nodiscard]] QWidget* blockedOptions(ServerInfoProcessor& processor);
+    [[nodiscard]] QWidget* friendOptions(ConnectionHandler& processor, ChatPage& page, QStackedWidget& widget);
+    [[nodiscard]] QWidget* strangerOptions(ConnectionHandler& processor);
+    [[nodiscard]] QWidget* requestOptions(ConnectionHandler& processor);
+    [[nodiscard]] QWidget* blockedOptions(ConnectionHandler& processor);
 
-    void connectOptions(SearchType type, ServerInfoProcessor& processor, ChatPage& page, QStackedWidget& widget);
-    void connectFriendOptions(ServerInfoProcessor& processor, ChatPage& page, QStackedWidget& widget);
-    void connectStrangerOptions(ServerInfoProcessor& processor);
-    void connectRequestOptions(ServerInfoProcessor& processor);
-    void connectBlockedOptions(ServerInfoProcessor& processor);
+    void connectOptions(SearchType type, ConnectionHandler& processor, ChatPage& page, QStackedWidget& widget);
+    void connectFriendOptions(ConnectionHandler& processor, ChatPage& page, QStackedWidget& widget);
+    void connectStrangerOptions(ConnectionHandler& processor);
+    void connectRequestOptions(ConnectionHandler& processor);
+    void connectBlockedOptions(ConnectionHandler& processor);
 private:
     SearchType _searchType;
     QWidget* pOptions;

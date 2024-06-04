@@ -12,12 +12,12 @@ public:
         Social
     };
 public:
-    SubpageManager(QWidget* parent , ServerInfoProcessor& pInfoProcessor , UserSelectorWidget& userSelector, KeywordCombo& keywordCombo);
+    SubpageManager(QWidget* parent , ConnectionHandler& pInfoProcessor , UserSelectorWidget& userSelector, KeywordCombo& keywordCombo);
     void setPage(Type type);
     ChatPage& chatPage();
     SocialPage& socialPage();
 private:
     std::vector<Page*> subPage_list;
-    ServerInfoProcessor& infoProcessor;
+    ConnectionHandler& infoProcessor;
 };
 #endif // SUBPAGEMANAGER_H

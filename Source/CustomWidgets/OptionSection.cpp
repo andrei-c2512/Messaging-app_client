@@ -148,7 +148,7 @@ void ChatView::resizeEvent(QResizeEvent* ev)
 
 
 
-ChatListWidget::ChatListWidget(QWidget* parent , const ServerInfoProcessor& infoProcessor0 , SubpageManager& manager ,  Type type0)
+ChatListWidget::ChatListWidget(QWidget* parent , const ConnectionHandler& infoProcessor0 , SubpageManager& manager ,  Type type0)
     :QWidget(parent) , infoProcessor(infoProcessor0) , subpageManager(manager) ,  type(type0)
 {
     setAttribute(Qt::WA_StyledBackground);
@@ -338,7 +338,7 @@ void ChatListWidget::setTextVisible(bool visible)
 }
 
 
-ChatListView::ChatListView(QWidget* widget , const ServerInfoProcessor& processor , SubpageManager& manager)
+ChatListView::ChatListView(QWidget* widget , const ConnectionHandler& processor , SubpageManager& manager)
     :QWidget(widget) , serverProcessor(processor) , subpageManager(manager)
 {
     setAttribute(Qt::WA_StyledBackground);
@@ -388,7 +388,7 @@ void ChatListView::setList(ChatListWidget::Type type)
         pStackedWidget->setCurrentWidget(pRequestList);
 }
 
-OptionSection::OptionSection(QWidget* parent , const ServerInfoProcessor& processor , SubpageManager& subpageManager0 , UserSelectorWidget& userSelectorWidget)
+OptionSection::OptionSection(QWidget* parent , const ConnectionHandler& processor , SubpageManager& subpageManager0 , UserSelectorWidget& userSelectorWidget)
     :QWidget(parent) , serverProcessor(processor) , subpageManager(subpageManager0)
 {
     setAttribute(Qt::WA_Hover);
@@ -544,7 +544,7 @@ void OptionSection::connectButtons() const
     });
 }
 
-OptionSectionFrame::OptionSectionFrame(QWidget* parent ,  const ServerInfoProcessor& processor , SubpageManager& pSubpageManager0 , UserSelectorWidget& userSelectorWidget)
+OptionSectionFrame::OptionSectionFrame(QWidget* parent ,  const ConnectionHandler& processor , SubpageManager& pSubpageManager0 , UserSelectorWidget& userSelectorWidget)
     :QWidget(parent)
 {
     pSection = new OptionSection(this , processor , pSubpageManager0 , userSelectorWidget);

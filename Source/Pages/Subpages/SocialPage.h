@@ -18,7 +18,7 @@
 class ContactList : public QScrollArea{
 public:
     ContactList(QWidget* parent = nullptr);
-    void setContactList(std::vector<ContactInfo*> contactList ,  ServerInfoProcessor& processor, 
+    void setContactList(std::vector<ContactInfo*> contactList ,  ConnectionHandler& processor, 
         ChatPage& chatPage0 , QStackedWidget& stackedW , SearchType type , bool isSearchBarEmpty);
     void setLoadLimit(int limit);
     int loadLimit() const;
@@ -45,7 +45,7 @@ private:
 class SocialPage : public Page{
     Q_OBJECT
 public:
-    SocialPage(QWidget* parent , ServerInfoProcessor& pInfoProcessor0 , ChatPage& chatPage0 , QStackedWidget& stackedWidget);
+    SocialPage(QWidget* parent , ConnectionHandler& pInfoProcessor0 , ChatPage& chatPage0 , QStackedWidget& stackedWidget);
     void setSearchType(SearchType type);
     void updateLists();
 public slots:

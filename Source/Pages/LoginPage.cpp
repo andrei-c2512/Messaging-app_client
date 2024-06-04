@@ -2,7 +2,7 @@
 #include "StyleBase/StyleRepository.h"
 #include "StyleBase/ButtonStyleRepository.h"
 
-LoginPage::LoginPage(QWidget* parent , ServerInfoProcessor& ServerInfoProcessor)
+LoginPage::LoginPage(QWidget* parent , ConnectionHandler& ServerInfoProcessor)
     :Page(parent , ServerInfoProcessor)
 {
     setupUi();

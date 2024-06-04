@@ -15,7 +15,7 @@ public:
       Friends
     };
 public:
-    MainPage(QWidget* parent , ServerInfoProcessor& processor , UserSelectorWidget& userSelectorWidget, KeywordCombo& keywordCombo);
+    MainPage(QWidget* parent , ConnectionHandler& processor , UserSelectorWidget& userSelectorWidget, KeywordCombo& keywordCombo);
 private:
     void setupUi(UserSelectorWidget& userSelectorWidget, KeywordCombo& keywordCombo);
 private:

@@ -1,7 +1,7 @@
-#include <QString>
+#include <QByteArray>
 
 namespace TextParser{
-    int dataPos(const QString& message, const QString& separator, int start);
-    QString extractData(const QString& message, int start);
-    bool extractDataBool(const QString& message, int start);
+    int dataPos(const QByteArray& message, const QByteArray& separator, qsizetype start);
+    QByteArray extractData(const QByteArray& message, qsizetype start);
+    bool extractDataBool(const QByteArray& message, qsizetype start);
 };
